@@ -1,7 +1,8 @@
 import os
+import dj_database_url
 from pathlib import Path
 from decouple import config
-import dj_database_url
+
 
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -62,23 +63,14 @@ WSGI_APPLICATION = 'document_system.wsgi.application'
 # ✅ Database configuration for Render (PostgreSQL)
 DATABASE_URL = config('DATABASE_URL', default=None)
 
-if DATABASE_URL:
-    # Production: Use Render's PostgreSQL
-    DATABASES = {
-        'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600)
-    }
-else:
-    # Development: Use local PostgreSQL
-    DATABASES = {
-        'default': {
-            'ENGINE': 'django.db.backends.postgresql',
-            'NAME': config('DB_NAME', default='document_request_db'),
-            'USER': config('DB_USER', default='docrequest_user'),
-            'PASSWORD': config('DB_PASSWORD', default='your_secure_password'),
-            'HOST': config('DB_HOST', default='localhost'),
-            'PORT': config('DB_PORT', default='5432'),
-        }
-    }
+DATABASES = {
+    'default': dj_database_url.config(
+        default=config('DATABASE_URL', default='postgresql://postgres:password@localhost:5432/document_request_db'),
+        conn_max_age=600,
+        ssl_require=True
+    )
+}
+
 
 # ✅ Password validation
 AUTH_PASSWORD_VALIDATORS = [
