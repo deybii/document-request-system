@@ -1,0 +1,543 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{% block title %}Document Request System{% endblock %}</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        body {
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+        }
+        
+        /* Enhanced Navigation Styles */
+        .navbar {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%) !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+            padding: 1rem 0;
+        }
+        
+        .navbar-brand {
+            color: white !important;
+            font-weight: 700;
+            font-size: 1.3rem;
+            transition: all 0.3s ease;
+        }
+        
+        .navbar-brand:hover {
+            transform: scale(1.05);
+            color: #3498db !important;
+        }
+        
+        .navbar-brand i {
+            margin-right: 0.5rem;
+            color: #3498db;
+        }
+        
+        .nav-link {
+            color: rgba(255, 255, 255, 0.9) !important;
+            font-weight: 500;
+            transition: all 0.3s ease;
+            padding: 0.5rem 1rem !important;
+            border-radius: 8px;
+            margin: 0 0.25rem;
+            position: relative;
+        }
+        
+        .nav-link:hover {
+            background: rgba(52, 152, 219, 0.2);
+            color: #3498db !important;
+            transform: translateY(-2px);
+        }
+        
+        .nav-link.active {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white !important;
+            box-shadow: 0 4px 12px rgba(52, 152, 219, 0.4);
+        }
+        
+        .nav-link i {
+            font-size: 0.9rem;
+            margin-right: 0.3rem;
+        }
+        
+        /* Dropdown Styles */
+        .dropdown-menu {
+            border-radius: 12px;
+            box-shadow: 0 8px 24px rgba(0, 0, 0, 0.15);
+            border: none;
+            padding: 0.5rem 0;
+            min-width: 260px;
+            margin-top: 0.5rem;
+            animation: slideDown 0.3s ease;
+        }
+        
+        @keyframes slideDown {
+            from {
+                opacity: 0;
+                transform: translateY(-10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .dropdown-item {
+            padding: 0.75rem 1.5rem;
+            transition: all 0.3s ease;
+            font-weight: 500;
+        }
+        
+        .dropdown-item:hover {
+            background: rgba(52, 152, 219, 0.1);
+            color: #3498db;
+            padding-left: 1.75rem;
+        }
+        
+        .dropdown-item i {
+            width: 20px;
+            text-align: center;
+        }
+        
+        .dropdown-item-text {
+            font-size: 0.85rem;
+            padding: 0.5rem 1.5rem;
+            color: #6c757d;
+        }
+        
+        .dropdown-divider {
+            margin: 0.5rem 0;
+            opacity: 0.1;
+        }
+        
+        .dropdown-toggle::after {
+            margin-left: 0.5rem;
+        }
+        
+        /* User Badge in Dropdown */
+        .user-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            color: white;
+            border-radius: 20px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            margin-bottom: 0.5rem;
+        }
+        
+        .user-badge.student {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .user-badge.alumni {
+            background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        }
+        
+        .user-badge.faculty {
+            background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+        }
+        
+        .user-badge.admin {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+        }
+        
+        .user-info {
+            padding: 1rem 1.5rem;
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            border-radius: 8px;
+            margin: 0.5rem;
+        }
+        
+        .user-info strong {
+            display: block;
+            font-size: 1.1rem;
+            color: #2c3e50;
+            margin-bottom: 0.5rem;
+        }
+        
+        .content {
+            flex: 1;
+            padding: 2rem 0;
+        }
+        
+        footer {
+            background: linear-gradient(135deg, #2c3e50 0%, #34495e 100%);
+            color: white;
+            padding: 1.5rem 0;
+            margin-top: auto;
+            box-shadow: 0 -4px 12px rgba(0, 0, 0, 0.15);
+        }
+        
+        footer p {
+            margin-bottom: 0.5rem;
+        }
+        
+        footer a {
+            color: #3498db;
+            text-decoration: none;
+            transition: color 0.3s ease;
+        }
+        
+        footer a:hover {
+            color: #5dade2;
+        }
+        
+        /* Alert Messages */
+        .alert {
+            border-radius: 12px;
+            border: none;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+            animation: slideInDown 0.3s ease;
+        }
+        
+        @keyframes slideInDown {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        /* Mobile Responsive */
+        @media (max-width: 991px) {
+            .nav-link {
+                margin: 0.25rem 0;
+            }
+            
+            .navbar-nav {
+                padding: 1rem 0;
+            }
+            
+            .dropdown-menu {
+                border: 1px solid rgba(0,0,0,0.1);
+                margin-top: 0.5rem;
+            }
+            
+            .navbar-brand {
+                font-size: 1.1rem;
+            }
+        }
+        
+        /* Guest Login Button */
+        .btn-login {
+            background: linear-gradient(135deg, #3498db 0%, #2980b9 100%);
+            border: none;
+            padding: 0.5rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+        
+        .btn-login:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 16px rgba(52, 152, 219, 0.4);
+        }
+        
+        /* Logout Confirmation Modal Styles */
+        .logout-modal .modal-content {
+            border-radius: 16px;
+            border: none;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+        }
+        
+        .logout-modal .modal-header {
+            background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+            color: white;
+            border-radius: 16px 16px 0 0;
+            padding: 1.5rem;
+        }
+        
+        .logout-modal .modal-body {
+            padding: 2rem;
+        }
+        
+        .logout-modal .user-info-modal {
+            background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+            padding: 1rem;
+            border-radius: 12px;
+            margin: 1rem 0;
+            text-align: center;
+        }
+    </style>
+    {% block extra_css %}{% endblock %}
+</head>
+<body>
+    {% if user.is_authenticated %}
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% if user.is_staff or user.is_superuser %}{% url 'admin_dashboard' %}{% else %}{% url 'home' %}{% endif %}">
+                <i class="fas fa-graduation-cap"></i>Document Request System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                {% if user.is_staff or user.is_superuser %}
+                    <!-- ADMIN/STAFF NAVIGATION -->
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'admin_dashboard' %}active{% endif %}" href="{% url 'admin_dashboard' %}">
+                                <i class="fas fa-tachometer-alt"></i>Dashboard
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'admin_requests' or request.resolver_match.url_name == 'admin_request_detail' %}active{% endif %}" href="{% url 'admin_requests' %}">
+                                <i class="fas fa-file-alt"></i>Manage Requests
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'admin_users' %}active{% endif %}" href="{% url 'admin_users' %}">
+                                <i class="fas fa-users"></i>Manage Users
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link" href="/admin/" target="_blank">
+                                <i class="fas fa-cog"></i>Django Admin
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="adminDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-shield"></i>{{ user.get_full_name|default:user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="adminDropdown">
+                                <li>
+                                    <div class="user-info">
+                                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                        <span class="user-badge admin">
+                                            <i class="fas fa-shield-alt me-1"></i>Administrator
+                                        </span>
+                                        <div class="small text-muted mt-2">
+                                            <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                                        </div>
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'about' %}">
+                                        <i class="fas fa-info-circle"></i>About
+                                    </a>
+                                </li>
+                                <li>
+                                    <a class="dropdown-item" href="{% url 'contact' %}">
+                                        <i class="fas fa-envelope"></i>Contact
+                                    </a>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                        <i class="fas fa-sign-out-alt"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                {% else %}
+                    <!-- REGULAR USER NAVIGATION -->
+                    <ul class="navbar-nav ms-auto">
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'home' %}active{% endif %}" href="{% url 'home' %}">
+                                <i class="fas fa-home"></i>Home
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'request' %}active{% endif %}" href="{% url 'request' %}">
+                                <i class="fas fa-plus-circle"></i>Request Document
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">
+                                <i class="fas fa-info-circle"></i>About
+                            </a>
+                        </li>
+                        <li class="nav-item">
+                            <a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}">
+                                <i class="fas fa-envelope"></i>Contact
+                            </a>
+                        </li>
+                        <li class="nav-item dropdown">
+                            <a class="nav-link dropdown-toggle" href="#" id="userDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                                <i class="fas fa-user-circle"></i>{{ user.get_full_name|default:user.username }}
+                            </a>
+                            <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="userDropdown">
+                                <li>
+                                    <div class="user-info">
+                                        <strong>{{ user.get_full_name|default:user.username }}</strong>
+                                        {% if user.profile %}
+                                            <span class="user-badge {{ user.profile.role }}">
+                                                <i class="fas {% if user.profile.role == 'student' %}fa-user-graduate{% elif user.profile.role == 'alumni' %}fa-user-tie{% else %}fa-chalkboard-teacher{% endif %} me-1"></i>
+                                                {{ user.profile.get_role_display }}
+                                            </span>
+                                            <div class="small text-muted mt-2">
+                                                <i class="fas fa-id-badge me-1"></i>{{ user.profile.school_id }}
+                                            </div>
+                                            <div class="small text-muted">
+                                                <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                                            </div>
+                                            {% if user.profile.is_verified %}
+                                                <div class="small text-success mt-1">
+                                                    <i class="fas fa-check-circle me-1"></i>Verified Account
+                                                </div>
+                                            {% else %}
+                                                <div class="small text-warning mt-1">
+                                                    <i class="fas fa-clock me-1"></i>Pending Verification
+                                                </div>
+                                            {% endif %}
+                                        {% else %}
+                                            <div class="small text-muted mt-2">
+                                                <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                                            </div>
+                                        {% endif %}
+                                    </div>
+                                </li>
+                                <li><hr class="dropdown-divider"></li>
+                                <li>
+                                    <a class="dropdown-item text-danger" href="#" data-bs-toggle="modal" data-bs-target="#logoutModal">
+                                        <i class="fas fa-sign-out-alt"></i>Logout
+                                    </a>
+                                </li>
+                            </ul>
+                        </li>
+                    </ul>
+                {% endif %}
+            </div>
+        </div>
+    </nav>
+
+    <!-- Logout Confirmation Modal -->
+    <div class="modal fade logout-modal" id="logoutModal" tabindex="-1" aria-labelledby="logoutModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="logoutModalLabel">
+                        <i class="fas fa-sign-out-alt me-2"></i>Confirm Logout
+                    </h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="text-center">
+                        <i class="fas fa-user-circle fa-4x text-primary mb-3"></i>
+                        <h5>Are you sure you want to logout?</h5>
+                        
+                       <div class="user-info-modal text-center">
+                        <strong class="d-block mb-2">
+                            {{ user.get_full_name|default:user.username }}
+                        </strong>
+
+                        {% if user.is_staff or user.is_superuser %}
+                            <span class="user-badge admin">
+                                <i class="fas fa-shield-alt me-1"></i>Administrator
+                            </span>
+                        {% elif user.profile %}
+                            <span class="user-badge {{ user.profile.role }}">
+                                <i class="fas 
+                                    {% if user.profile.role == 'student' %}fa-user-graduate
+                                    {% elif user.profile.role == 'faculty' %}fa-chalkboard-teacher
+                                    {% elif user.profile.role == 'alumni' %}fa-user-tie
+                                    {% endif %}
+                                me-1"></i>
+                                {{ user.profile.get_role_display }}
+                            </span>
+
+                            <div class="small text-muted mt-2">
+                                <i class="fas fa-id-badge me-1"></i>
+                                {{ user.profile.school_id|default:"No School ID" }}
+                            </div>
+                        {% endif %}
+
+                        <div class="small text-muted mt-1">
+                            <i class="fas fa-envelope me-1"></i>{{ user.email }}
+                        </div>
+                    </div>  
+
+                        
+                        <p class="text-muted mt-3 mb-0">You will be redirected to the login page.</p>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                        <i class="fas fa-times me-2"></i>Cancel
+                    </button>
+                    <a href="{% url 'logout' %}" class="btn btn-danger">
+                        <i class="fas fa-sign-out-alt me-2"></i>Yes, Logout
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    {% else %}
+    <!-- GUEST NAVIGATION (Not logged in) -->
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="{% url 'index' %}">
+                <i class="fas fa-graduation-cap"></i>Document Request System
+            </a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'about' %}active{% endif %}" href="{% url 'about' %}">
+                            <i class="fas fa-info-circle"></i>About
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link {% if request.resolver_match.url_name == 'contact' %}active{% endif %}" href="{% url 'contact' %}">
+                            <i class="fas fa-envelope"></i>Contact
+                        </a>
+                    </li>
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-login text-white ms-2" href="{% url 'index' %}">
+                            <i class="fas fa-sign-in-alt"></i>Login / Register
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+    {% endif %}
+
+    <div class="content">
+        <div class="container">
+            {% if messages %}
+                {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {% if 'safe' in message.tags %}
+                        {{ message|safe }}
+                    {% else %}
+                        {{ message }}
+                    {% endif %}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+                {% endfor %}
+            {% endif %}
+
+            {% block content %}{% endblock %}
+        </div>
+    </div>
+
+    <footer class="text-center">
+        <div class="container">
+            <p>&copy; 2025 Document Request System. All rights reserved.</p>
+            <p class="small">
+                <a href="{% url 'about' %}">About</a> | 
+                <a href="{% url 'contact' %}">Contact</a> | 
+                <a href="/admin/">Admin Panel</a>
+            </p>
+        </div>
+    </footer>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    {% block extra_js %}{% endblock %}
+</body>
+</html>

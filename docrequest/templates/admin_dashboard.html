@@ -1,0 +1,1093 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Registrar Dashboard{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+/* Dark mode support 
+[data-theme="dark"] {
+    --glass-bg: rgba(30, 30, 30, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.1);
+}*/
+
+/* Glassmorphism cards */
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+/* Animated gradient backgrounds */
+.gradient-animated {
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+/* Counter animation */
+.counter {
+    display: inline-block;
+    transition: all 0.5s ease;
+}
+
+.counter.counting {
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+/* Modern stat cards */
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card .icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+/* Action cards with hover effects */
+.action-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.action-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.action-card:hover::after {
+    opacity: 1;
+}
+
+.action-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.action-card .icon-circle {
+    width: 80px;
+    height: 80px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.action-card:hover .icon-circle {
+    transform: rotate(360deg) scale(1.1);
+}
+
+/* Modern table styling */
+.modern-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modern-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+    transform: scale(1.01);
+}
+
+/* Loading skeleton */
+.skeleton {
+    background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s ease-in-out infinite;
+    border-radius: 4px;
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
+/* Status badges with glow */
+.badge-glow {
+    position: relative;
+    box-shadow: 0 0 12px currentColor;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.7; }
+}
+
+/* Chart container */
+.chart-container {
+    position: relative;
+    height: 300px;
+    margin: 20px 0;
+}
+
+/* Filter panel */
+.filter-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 16px;
+    margin-bottom: 20px;
+    border: 1px solid var(--glass-border);
+}
+
+/* Quick search */
+.quick-search {
+    position: relative;
+}
+
+.quick-search input {
+    border-radius: 24px;
+    padding: 12px 20px 12px 48px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.quick-search input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.quick-search .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+}
+
+
+/* Tooltip */
+.custom-tooltip {
+    position: relative;
+}
+
+.custom-tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-bottom: 8px;
+}
+
+.custom-tooltip:hover::before {
+    opacity: 1;
+}
+
+/* Progress bars */
+.progress-modern {
+    height: 8px;
+    border-radius: 4px;
+    background: rgba(0, 0, 0, 0.05);
+    overflow: hidden;
+}
+
+.progress-modern .progress-bar {
+    background: var(--primary-gradient);
+    transition: width 0.6s ease;
+}
+
+/* Activity timeline */
+.timeline {
+    position: relative;
+    padding-left: 32px;
+}
+
+.timeline::before {
+    content: '';
+    position: absolute;
+    left: 8px;
+    top: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+}
+
+.timeline-item {
+    position: relative;
+    margin-bottom: 24px;
+}
+
+.timeline-item::before {
+    content: '';
+    position: absolute;
+    left: -27px;
+    top: 4px;
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+    background: white;
+    border: 3px solid #667eea;
+}
+
+/* Responsive grid adjustments */
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 16px;
+    }
+    
+    .action-card {
+        margin-bottom: 16px;
+    }
+    
+    .display-4 {
+        font-size: 2rem;
+    }
+    
+    .theme-toggle {
+        bottom: 16px;
+        right: 16px;
+        width: 48px;
+        height: 48px;
+    }
+}
+
+/* Print styles */
+@media print {
+    .no-print {
+        display: none !important;
+    }
+    
+    .glass-card {
+        box-shadow: none;
+        border: 1px solid #ddd;
+    }
+}
+
+/* Accessibility */
+.focus-visible:focus {
+    outline: 3px solid #667eea;
+    outline-offset: 2px;
+}
+
+/* Smooth scrolling */
+html {
+    scroll-behavior: smooth;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+    width: 10px;
+}
+
+::-webkit-scrollbar-track {
+    background: #f1f1f1;
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 10px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+    background: linear-gradient(135deg, #764ba2 0%, #667eea 100%);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 pb-5">
+    <!-- Header with enhanced styling -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div class="mb-3 mb-md-0">
+            <h2 class="mb-2">
+                <i class="fas fa-tachometer-alt text-primary"></i> 
+                <span class="ms-2">Registrar Dashboard</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-calendar-day me-2"></i>
+                <span id="current-date"></span>
+            </p>
+        </div>
+        <div class="btn-group no-print" role="group">
+            <a href="{% url 'admin_requests' %}" class="btn btn-primary">
+                <i class="fas fa-file-alt me-2"></i>Manage Requests
+            </a>
+            <a href="{% url 'admin_users' %}" class="btn btn-secondary">
+                <i class="fas fa-users me-2"></i>Manage Users
+            </a>
+            <a href="/admin/" class="btn btn-dark">
+                <i class="fas fa-cog me-2"></i>Django Admin
+            </a>
+        </div>
+    </div>
+
+    <!-- Quick Search & Filters -->
+    <div class="filter-panel no-print">
+        <div class="row align-items-center">
+            <div class="col-md-6">
+                <div class="quick-search">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" class="form-control" id="dashboard-search" placeholder="Quick search by Order ID, Student Name, or Email...">
+                </div>
+            </div>
+            <div class="col-md-6 text-end mt-3 mt-md-0">
+                <button class="btn btn-outline-primary btn-sm me-2" onclick="refreshDashboard()">
+                    <i class="fas fa-sync-alt me-1"></i>Refresh
+                </button>
+                <button class="btn btn-outline-secondary btn-sm me-2" onclick="exportData()">
+                    <i class="fas fa-download me-1"></i>Export
+                </button>
+                <button class="btn btn-outline-info btn-sm" onclick="window.print()">
+                    <i class="fas fa-print me-1"></i>Print
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Today's Highlights with enhanced design -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="stat-card gradient-animated text-white shadow-lg" style="background: var(--primary-gradient);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.85rem;">New Requests Today</h6>
+                        <h2 class="display-3 mb-0 fw-bold">
+                            <span class="counter" data-target="{{ today_requests }}">0</span>
+                        </h2>
+                        <small class="text-white-50 mt-2 d-block">
+                            <i class="fas fa-clock me-1"></i>Last updated: <span id="last-update-time">Just now</span>
+                        </small>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="fas fa-calendar-plus fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="col-md-6">
+            <div class="stat-card gradient-animated text-white shadow-lg" style="background: var(--success-gradient);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.85rem;">Payments Today</h6>
+                        <h2 class="display-3 mb-0 fw-bold">
+                            <span class="counter" data-target="{{ today_payments }}">0</span>
+                        </h2>
+                        <small class="text-white-50 mt-2 d-block">
+                            <i class="fas fa-chart-line me-1"></i>Processing smoothly
+                        </small>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="fas fa-dollar-sign fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Action Cards -->
+    <div class="row mb-4">
+
+        <!-- Pending Requests -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="{% url 'admin_requests' %}?status=pending" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100 border-warning">
+                    <div class="icon-circle bg-warning bg-opacity-10">
+                        <i class="fas fa-clock fa-2x text-warning"></i>
+                    </div>
+                    <h3 class="display-5 text-warning mb-2 fw-bold counter" data-target="{{ pending_requests }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Pending Requests</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>Click to review
+                    </small>
+                </div>
+            </a>
+        </div>
+
+        <!-- Ready for Pickup -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="{% url 'admin_requests' %}?status=ready" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100 border-success">
+                    <div class="icon-circle bg-success bg-opacity-10">
+                        <i class="fas fa-box fa-2x text-success"></i>
+                    </div>
+                    <h3 class="display-5 text-success mb-2 fw-bold counter" data-target="{{ ready_for_pickup }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Ready for Pickup</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>View available
+                    </small>
+                </div>
+            </a>
+        </div>
+
+        <!-- Unpaid Requests -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="{% url 'admin_requests' %}?payment_status=unpaid" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100 border-danger">
+                    <div class="icon-circle bg-danger bg-opacity-10">
+                        <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+                    </div>
+                    <h3 class="display-5 text-danger mb-2 fw-bold counter" data-target="{{ unpaid_requests }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Unpaid Requests</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>Follow up needed
+                    </small>
+                </div>
+            </a>
+        </div>
+
+        <!-- Unverified Users -->
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="{% url 'admin_users' %}?verified=no" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100 border-info">
+                    <div class="icon-circle bg-info bg-opacity-10">
+                        <i class="fas fa-user-check fa-2x text-info"></i>
+                    </div>
+                    <h3 class="display-5 text-info mb-2 fw-bold counter" data-target="{{ unverified_users }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Unverified Users</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>Review profiles
+                    </small>
+                </div>
+            </a>
+        </div>
+
+    </div>
+
+    <!-- Detailed Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-12">
+            <div class="glass-card shadow-lg">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <div class="d-flex justify-content-between align-items-center">
+                        <h5 class="mb-0 fw-bold">
+                            <i class="fas fa-chart-pie text-primary me-2"></i>Request Status Overview
+                        </h5>
+                        <button class="btn btn-sm btn-outline-primary" onclick="toggleChartView()">
+                            <i class="fas fa-chart-bar me-1"></i>Toggle Chart
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center" id="status-stats">
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-circle glass-card p-3">
+                                <i class="fas fa-list-alt fa-2x text-primary mb-2"></i>
+                                <h3 class="text-primary fw-bold counter" data-target="{{ total_requests }}">0</h3>
+                                <p class="text-muted small mb-0">Total Requests</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-circle glass-card p-3">
+                                <i class="fas fa-clock fa-2x text-warning mb-2"></i>
+                                <h3 class="text-warning fw-bold counter" data-target="{{ pending_requests }}">0</h3>
+                                <p class="text-muted small mb-0">Pending</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-circle glass-card p-3">
+                                <i class="fas fa-spinner fa-2x text-info mb-2"></i>
+                                <h3 class="text-info fw-bold counter" data-target="{{ processing_requests }}">0</h3>
+                                <p class="text-muted small mb-0">Processing</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-circle glass-card p-3">
+                                <i class="fas fa-box-open fa-2x text-primary mb-2"></i>
+                                <h3 class="text-primary fw-bold counter" data-target="{{ ready_requests }}">0</h3>
+                                <p class="text-muted small mb-0">Ready</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-circle glass-card p-3">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h3 class="text-success fw-bold counter" data-target="{{ completed_requests }}">0</h3>
+                                <p class="text-muted small mb-0">Completed</p>
+                            </div>
+                        </div>
+                        <div class="col-md-2 col-6 mb-3">
+                            <div class="stat-circle glass-card p-3">
+                                <i class="fas fa-times-circle fa-2x text-danger mb-2"></i>
+                                <h3 class="text-danger fw-bold counter" data-target="{{ rejected_requests }}">0</h3>
+                                <p class="text-muted small mb-0">Rejected</p>
+                            </div>
+                        </div>
+                    </div>
+                    <!-- Chart Container (hidden by default) -->
+                    <div class="chart-container d-none" id="chart-view">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment & User Stats Row -->
+    <div class="row mb-4">
+        <!-- Payment Statistics -->
+        <div class="col-md-6 mb-3 mb-md-0">
+            <div class="glass-card shadow-lg h-100">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-credit-card text-success me-2"></i>Payment Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-4">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h4 class="text-success fw-bold counter" data-target="{{ paid_requests }}">0</h4>
+                                <p class="text-muted small mb-0">Paid</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-hourglass-half fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning fw-bold counter" data-target="{{ unpaid_requests }}">0</h4>
+                                <p class="text-muted small mb-0">Unpaid</p>
+                            </div>
+                        </div>
+                        <div class="col-4">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-exclamation-triangle fa-2x text-danger mb-2"></i>
+                                <h4 class="text-danger fw-bold counter" data-target="{{ failed_payments }}">0</h4>
+                                <p class="text-muted small mb-0">Failed</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-mobile-alt fa-2x text-info mb-2"></i>
+                                <h5 class="mb-1 fw-bold counter" data-target="{{ online_payments }}">0</h5>
+                                <small class="text-muted">Online Payments</small>
+                                <div class="progress-modern mt-2">
+                                    <div class="progress-bar bg-info" role="progressbar" style="width: 65%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-money-bill fa-2x text-success mb-2"></i>
+                                <h5 class="mb-1 fw-bold counter" data-target="{{ cash_payments }}">0</h5>
+                                <small class="text-muted">Cash Payments</small>
+                                <div class="progress-modern mt-2">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 35%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- User Statistics -->
+        <div class="col-md-6">
+            <div class="glass-card shadow-lg h-100">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-users text-primary me-2"></i>User Statistics
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="row text-center mb-3">
+                        <div class="col-3">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-users fa-2x text-primary mb-2"></i>
+                                <h4 class="text-primary fw-bold counter" data-target="{{ total_users }}">0</h4>
+                                <p class="text-muted small mb-0">Total</p>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-user-graduate fa-2x text-info mb-2"></i>
+                                <h4 class="text-info fw-bold counter" data-target="{{ student_users }}">0</h4>
+                                <p class="text-muted small mb-0">Students</p>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-user-tie fa-2x text-success mb-2"></i>
+                                <h4 class="text-success fw-bold counter" data-target="{{ alumni_users }}">0</h4>
+                                <p class="text-muted small mb-0">Alumni</p>
+                            </div>
+                        </div>
+                        <div class="col-3">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-chalkboard-teacher fa-2x text-warning mb-2"></i>
+                                <h4 class="text-warning fw-bold counter" data-target="{{ faculty_users }}">0</h4>
+                                <p class="text-muted small mb-0">Faculty</p>
+                            </div>
+                        </div>
+                    </div>
+                    <hr class="my-4">
+                    <div class="row text-center">
+                        <div class="col-6">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-check-circle fa-2x text-success mb-2"></i>
+                                <h5 class="mb-1 fw-bold counter" data-target="{{ verified_users }}">0</h5>
+                                <small class="text-muted">Verified Users</small>
+                                <div class="progress-modern mt-2">
+                                    <div class="progress-bar bg-success" role="progressbar" style="width: 75%"></div>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="col-6">
+                            <div class="p-3 glass-card">
+                                <i class="fas fa-exclamation-triangle fa-2x text-warning mb-2"></i>
+                                <h5 class="mb-1 fw-bold counter" data-target="{{ unverified_users }}">0</h5>
+                                <small class="text-muted">Need Verification</small>
+                                <div class="progress-modern mt-2">
+                                    <div class="progress-bar bg-warning" role="progressbar" style="width: 25%"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="row">
+        <!-- Recent Requests -->
+        <div class="col-md-8 mb-4">
+            <div class="glass-card shadow-lg">
+                <div class="card-header bg-transparent border-0 pt-4 d-flex justify-content-between align-items-center">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-list text-primary me-2"></i>Recent Requests
+                    </h5>
+                    <a href="{% url 'admin_requests' %}" class="btn btn-sm btn-primary">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body p-0">
+                    <div class="table-responsive">
+                        <table class="table modern-table mb-0">
+                            <thead>
+                                <tr>
+                                    <th class="px-4 py-3">Order ID</th>
+                                    <th class="py-3">Student</th>
+                                    <th class="py-3">Document</th>
+                                    <th class="py-3">Status</th>
+                                    <th class="py-3">Payment</th>
+                                    <th class="py-3">Date</th>
+                                    <th class="py-3">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for req in recent_requests %}
+                                <tr>
+                                    <td class="px-4 py-3">
+                                        <a href="{% url 'admin_request_detail' req.order_id %}" class="text-primary font-monospace fw-bold text-decoration-none custom-tooltip" data-tooltip="View details">
+                                            {{ req.order_id }}
+                                        </a>
+                                    </td>
+                                    <td class="py-3">
+                                        <div>
+                                            <strong class="d-block">{{ req.user.get_full_name }}</strong>
+                                            <small class="text-muted">
+                                                <i class="fas fa-id-card me-1"></i>{{ req.user.username }}
+                                            </small>
+                                        </div>
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="badge bg-secondary bg-opacity-10 text-dark">
+                                            <i class="fas fa-file-alt me-1"></i>{{ req.get_document_type_display }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="badge {% if req.status == 'pending' %}bg-warning{% elif req.status == 'processing' %}bg-info{% elif req.status == 'ready' %}bg-primary{% elif req.status == 'completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                            {{ req.get_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <span class="badge {% if req.payment_status == 'paid' %}bg-success{% elif req.payment_status == 'failed' %}bg-danger{% else %}bg-warning{% endif %}">
+                                            {% if req.payment_method == 'online' %}
+                                                <i class="fas fa-credit-card me-1"></i>
+                                            {% else %}
+                                                <i class="fas fa-money-bill me-1"></i>
+                                            {% endif %}
+                                            {{ req.get_payment_status_display }}
+                                        </span>
+                                    </td>
+                                    <td class="py-3">
+                                        <small class="text-muted">
+                                            <i class="far fa-clock me-1"></i>{{ req.created_at|date:"M d, h:i A" }}
+                                        </small>
+                                    </td>
+                                    <td class="py-3">
+                                        <a href="{% url 'admin_request_detail' req.order_id %}" class="btn btn-sm btn-outline-primary custom-tooltip" data-tooltip="View details">
+                                            <i class="fas fa-eye"></i>
+                                        </a>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="7" class="text-center text-muted py-5">
+                                        <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                        <p class="mb-0">No requests yet</p>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Recent Users & Document Breakdown -->
+        <div class="col-md-4">
+            <!-- Recent Users -->
+            <div class="glass-card shadow-lg mb-4">
+                <div class="card-header bg-transparent border-0 pt-4 d-flex justify-content-between align-items-center">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-user-plus text-success me-2"></i>Recent Users
+                    </h6>
+                    <a href="{% url 'admin_users' %}" class="btn btn-sm btn-secondary">
+                        View All <i class="fas fa-arrow-right ms-1"></i>
+                    </a>
+                </div>
+                <div class="card-body">
+                    <div class="timeline">
+                        {% for profile in recent_users %}
+                        <div class="timeline-item">
+                            <div class="glass-card p-3 mb-3">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div class="flex-grow-1">
+                                        <strong class="d-block mb-1">{{ profile.user.get_full_name }}</strong>
+                                        <small class="text-muted d-block mb-1">
+                                            <i class="fas fa-id-card me-1"></i>{{ profile.school_id }}
+                                        </small>
+                                        <small class="text-muted d-block">
+                                            <i class="fas fa-envelope me-1"></i>{{ profile.user.email }}
+                                        </small>
+                                    </div>
+                                    <div class="text-end">
+                                        <span class="badge {% if profile.role == 'student' %}bg-primary{% elif profile.role == 'alumni' %}bg-success{% else %}bg-warning{% endif %} mb-2">
+                                            {{ profile.get_role_display }}
+                                        </span>
+                                        <br>
+                                        {% if profile.is_verified %}
+                                            <span class="badge bg-success">
+                                                <i class="fas fa-check me-1"></i>Verified
+                                            </span>
+                                        {% else %}
+                                            <span class="badge bg-warning">
+                                                <i class="fas fa-clock me-1"></i>Pending
+                                            </span>
+                                        {% endif %}
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% empty %}
+                        <div class="text-center text-muted py-4">
+                            <i class="fas fa-user-slash fa-2x mb-2 d-block"></i>
+                            <p class="mb-0">No recent registrations</p>
+                        </div>
+                        {% endfor %}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Type Breakdown -->
+            <div class="glass-card shadow-lg">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-chart-bar text-info me-2"></i>Document Types
+                    </h6>
+                </div>
+                <div class="card-body">
+                    {% for item in document_breakdown %}
+                    <div class="d-flex justify-content-between align-items-center mb-3 p-2 glass-card">
+                        <span class="text-dark fw-semibold">
+                            <i class="fas fa-file me-2 text-primary"></i>{{ item.document_type|title }}
+                        </span>
+                        <span class="badge bg-primary bg-opacity-10 text-primary fw-bold">{{ item.count }}</span>
+                    </div>
+                    {% empty %}
+                    <div class="text-center text-muted py-4">
+                        <i class="fas fa-chart-pie fa-2x mb-2 d-block"></i>
+                        <p class="mb-0">No data yet</p>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+{% endblock %}
+
+{% block extra_js %}
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Counter animation
+function animateCounter(element) {
+    const target = parseInt(element.getAttribute('data-target'));
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    
+    element.classList.add('counting');
+    
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+            element.classList.remove('counting');
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// Initialize counters on page load
+document.addEventListener('DOMContentLoaded', function() {
+    // Animate all counters
+    setTimeout(() => {
+        document.querySelectorAll('.counter').forEach(counter => {
+            animateCounter(counter);
+        });
+    }, 300);
+    
+    // Update current date
+    const dateElement = document.getElementById('current-date');
+    if (dateElement) {
+        const now = new Date();
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        dateElement.textContent = now.toLocaleDateString('en-US', options);
+    }
+    
+    // Update last update time
+    updateLastUpdateTime();
+});
+
+// Update last update time
+function updateLastUpdateTime() {
+    const timeElement = document.getElementById('last-update-time');
+    if (timeElement) {
+        timeElement.textContent = 'Just now';
+    }
+}
+
+// Dashboard search functionality
+document.getElementById('dashboard-search')?.addEventListener('input', function(e) {
+    const searchTerm = e.target.value.toLowerCase();
+    const rows = document.querySelectorAll('.modern-table tbody tr');
+    
+    rows.forEach(row => {
+        const text = row.textContent.toLowerCase();
+        row.style.display = text.includes(searchTerm) ? '' : 'none';
+    });
+});
+
+// Refresh dashboard
+function refreshDashboard() {
+    // Show loading state
+    const refreshBtn = event.target.closest('button');
+    const originalHTML = refreshBtn.innerHTML;
+    refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin me-1"></i>Refreshing...';
+    refreshBtn.disabled = true;
+    
+    // Simulate refresh (replace with actual AJAX call)
+    setTimeout(() => {
+        location.reload();
+    }, 1000);
+}
+
+// Export data
+function exportData() {
+    alert('Export functionality would be implemented here.\nOptions: CSV, PDF, Excel');
+}
+
+
+let chartInstance = null;
+
+function toggleChartView() {
+    const statsView = document.getElementById('status-stats');
+    const chartView = document.getElementById('chart-view');
+
+    // Toggle visibility
+    const showingChart = chartView.classList.contains('d-none');
+    statsView.classList.toggle('d-none', showingChart);
+    chartView.classList.toggle('d-none', !showingChart);
+
+    // If chart is not initialized yet, create it once
+    if (showingChart && !chartInstance) {
+        const ctx = document.getElementById('statusChart').getContext('2d');
+
+        // Prevent undefined or null values from breaking Chart.js
+        const dataValues = [
+            {{ pending_requests|default:0 }},
+            {{ processing_requests|default:0 }},
+            {{ ready_requests|default:0 }},
+            {{ completed_requests|default:0 }},
+            {{ rejected_requests|default:0 }}
+        ];
+
+        chartInstance = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Pending', 'Processing', 'Ready', 'Completed', 'Rejected'],
+                datasets: [{
+                    data: dataValues,
+                    backgroundColor: [
+                        'rgba(255, 193, 7, 0.85)',    // Yellow
+                        'rgba(13, 202, 240, 0.85)',   // Cyan
+                        'rgba(13, 110, 253, 0.85)',   // Blue
+                        'rgba(25, 135, 84, 0.85)',    // Green
+                        'rgba(220, 53, 69, 0.85)'     // Red
+                    ],
+                    borderColor: 'rgba(255,255,255,0.8)',
+                    borderWidth: 2
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                cutout: '70%', // makes it look cleaner
+                plugins: {
+                    legend: {
+                        position: 'bottom',
+                        labels: {
+                            color: '#333',
+                            padding: 18,
+                            font: { size: 14, weight: '500' }
+                        }
+                    },
+                    tooltip: {
+                        backgroundColor: 'rgba(0,0,0,0.8)',
+                        titleFont: { size: 14 },
+                        bodyFont: { size: 13 },
+                        padding: 10,
+                        cornerRadius: 8
+                    }
+                }
+            }
+        });
+    }
+}
+
+
+
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K for search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.getElementById('dashboard-search')?.focus();
+    }
+    
+    // Ctrl/Cmd + R for refresh
+    if ((e.ctrlKey || e.metaKey) && e.key === 'r') {
+        e.preventDefault();
+        refreshDashboard();
+    }
+    
+    // Ctrl/Cmd + P for print
+    if ((e.ctrlKey || e.metaKey) && e.key === 'p') {
+        // Let default behavior handle print
+    }
+});
+
+// Auto-refresh every 5 minutes
+setInterval(() => {
+    const timeElement = document.getElementById('last-update-time');
+    if (timeElement) {
+        const minutes = Math.floor((Date.now() - performance.timing.navigationStart) / 60000);
+        timeElement.textContent = minutes === 0 ? 'Just now' : `${minutes} min ago`;
+    }
+}, 60000);
+</script>
+{% endblock %}

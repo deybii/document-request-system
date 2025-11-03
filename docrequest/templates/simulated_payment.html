@@ -1,0 +1,132 @@
+{% extends 'base.html' %}
+
+{% block title %}Simulated Payment{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-primary">
+                <div class="card-header bg-primary text-white text-center">
+                    <h3 class="mb-0">💳 Simulated Payment</h3>
+                    <p class="mb-0 small">Order ID: <strong>{{ doc_request.order_id }}</strong></p>
+                </div>
+                <div class="card-body">
+                    <!-- Payment Details -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">⚠️ Demo Mode</h5>
+                        <p>This is a <strong>simulated payment system</strong>. No real money will be charged.</p>
+                        <hr>
+                        <p class="mb-0">You can simulate either a successful or failed payment below.</p>
+                    </div>
+
+                    <!-- Order Summary -->
+                    <div class="card mb-4">
+                        <div class="card-header bg-light">
+                            <h5 class="mb-0">📋 Order Summary</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-borderless mb-0">
+                                <tr>
+                                    <th width="40%">Order ID:</th>
+                                    <td><strong class="text-primary">{{ doc_request.order_id }}</strong></td>
+                                </tr>
+                                <tr>
+                                    <th>Document Type:</th>
+                                    <td>{{ doc_request.get_document_type_display }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Purpose:</th>
+                                    <td>{{ doc_request.purpose|truncatewords:20 }}</td>
+                                </tr>
+                                <tr>
+                                    <th>Payment Method:</th>
+                                    <td>
+                                        <span class="badge bg-info">
+                                            {{ doc_request.get_payment_method_display }}
+                                        </span>
+                                    </td>
+                                </tr>
+                                <tr class="border-top">
+                                    <th><h5 class="mb-0">Amount to Pay:</h5></th>
+                                    <td><h4 class="text-success mb-0">₱{{ doc_request.payment_amount }}</h4></td>
+                                </tr>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- Simulated Payment Options -->
+                    <div class="card mb-3">
+                        <div class="card-header bg-success text-white">
+                            <h5 class="mb-0">✅ Simulate Successful Payment</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>This will mark your payment as successful and generate a payment reference number.</p>
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="simulate_success">
+                                <button type="submit" class="btn btn-success btn-lg w-100">
+                                    💳 Complete Payment (Simulated)
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <div class="card mb-3">
+                        <div class="card-header bg-danger text-white">
+                            <h5 class="mb-0">❌ Simulate Failed Payment</h5>
+                        </div>
+                        <div class="card-body">
+                            <p>This will simulate a payment failure scenario.</p>
+                            <form method="POST">
+                                {% csrf_token %}
+                                <input type="hidden" name="action" value="simulate_failure">
+                                <button type="submit" class="btn btn-danger btn-lg w-100">
+                                    ⚠️ Simulate Payment Failure
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+
+                    <!-- Cancel Option -->
+                    <div class="text-center mt-4">
+                        <a href="{% url 'home' %}" class="btn btn-secondary">
+                            ← Cancel and Return to Dashboard
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Payment Instructions (Optional) -->
+            <div class="card mt-3">
+                <div class="card-header bg-light">
+                    <h6 class="mb-0">💡 How This Works</h6>
+                </div>
+                <div class="card-body">
+                    <ol class="small mb-0">
+                        <li>This is a demonstration payment system</li>
+                        <li>Click "Complete Payment" to simulate a successful transaction</li>
+                        <li>You'll receive a simulated payment reference number</li>
+                        <li>Your Order ID (<strong>{{ doc_request.order_id }}</strong>) will be updated to "Paid" status</li>
+                        <li>You can then track your request in your dashboard</li>
+                    </ol>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+.card {
+    transition: transform 0.2s ease;
+}
+
+.card:hover {
+    transform: translateY(-2px);
+}
+
+.table th {
+    font-weight: 600;
+}
+</style>
+{% endblock %}

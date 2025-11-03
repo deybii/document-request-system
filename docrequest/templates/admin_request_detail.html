@@ -1,0 +1,447 @@
+{% extends 'base.html' %}
+{% block title %}Request Detail - {{ doc_request.order_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.gradient-animated {
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.header-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 32px;
+    margin-bottom: 24px;
+}
+
+.header-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+}
+
+.info-card {
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 16px;
+    transition: all 0.3s ease;
+}
+
+.info-card:hover {
+    transform: translateX(4px);
+    box-shadow: var(--shadow-md);
+}
+
+.progress-tracker {
+    position: relative;
+    padding: 40px 0;
+}
+
+.progress-tracker::before {
+    content: '';
+    position: absolute;
+    left: 24px;
+    top: 0;
+    bottom: 0;
+    width: 3px;
+    background: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+}
+
+.progress-step {
+    position: relative;
+    padding-left: 60px;
+    margin-bottom: 32px;
+}
+
+.progress-step::before {
+    content: '';
+    position: absolute;
+    left: 13px;
+    top: 4px;
+    width: 24px;
+    height: 24px;
+    border-radius: 50%;
+    background: white;
+    border: 4px solid #667eea;
+    z-index: 1;
+}
+
+.progress-step.completed::before {
+    background: #56ab2f;
+    border-color: #56ab2f;
+}
+
+.progress-step.active::before {
+    background: #667eea;
+    border-color: #667eea;
+    box-shadow: 0 0 12px rgba(102, 126, 234, 0.6);
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 12px rgba(102, 126, 234, 0.6); }
+    50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+}
+
+.action-btn-group {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+}
+
+.action-btn {
+    flex: 1;
+    min-width: 150px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    font-weight: 600;
+    transition: all 0.3s ease;
+    border: none;
+    position: relative;
+    overflow: hidden;
+}
+
+.action-btn::before {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.3);
+    transform: translate(-50%, -50%);
+    transition: width 0.5s, height 0.5s;
+}
+
+.action-btn:hover::before {
+    width: 300px;
+    height: 300px;
+}
+
+.action-btn:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 8px 20px rgba(0, 0, 0, 0.2);
+}
+
+.badge-glow {
+    box-shadow: 0 0 12px currentColor;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.detail-row {
+    padding: 16px;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.2s ease;
+}
+
+.detail-row:hover {
+    background: rgba(102, 126, 234, 0.03);
+}
+
+.detail-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 4px;
+    font-size: 0.9rem;
+}
+
+.detail-value {
+    font-size: 1.1rem;
+    color: #212529;
+}
+
+@media (max-width: 768px) {
+    .action-btn-group {
+        flex-direction: column;
+    }
+    
+    .action-btn {
+        width: 100%;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 pb-5">
+    <!-- Back Button -->
+    <a href="{% url 'admin_requests' %}" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left me-2"></i>Back to Requests
+    </a>
+
+    <!-- Header Card -->
+    <div class="header-card glass-card gradient-animated text-white shadow-lg" style="background: var(--primary-gradient);">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">
+                    <i class="fas fa-file-alt me-3"></i>Request Details
+                </h2>
+                <h4 class="font-monospace mb-0">{{ doc_request.order_id }}</h4>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-block text-start">
+                    <small class="text-white-50 d-block mb-2">Current Status</small>
+                    <span class="badge badge-glow {% if doc_request.status == 'pending' %}bg-warning text-dark{% elif doc_request.status == 'processing' %}bg-info{% elif doc_request.status == 'ready' %}bg-light text-primary{% elif doc_request.status == 'completed' %}bg-success{% else %}bg-danger{% endif %}" style="font-size: 1.1rem; padding: 10px 20px;">
+                        <i class="fas {% if doc_request.status == 'pending' %}fa-clock{% elif doc_request.status == 'processing' %}fa-spinner fa-spin{% elif doc_request.status == 'ready' %}fa-box{% elif doc_request.status == 'completed' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-2"></i>
+                        {{ doc_request.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column - Request Information -->
+        <div class="col-lg-8 mb-4">
+            <!-- Student Information -->
+            <div class="glass-card shadow-lg mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-user text-primary me-2"></i>Student Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-user me-2"></i>Full Name
+                        </div>
+                        <div class="detail-value">{{ doc_request.user.get_full_name }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-id-card me-2"></i>Student ID
+                        </div>
+                        <div class="detail-value font-monospace">{{ doc_request.user.username }}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-envelope me-2"></i>Email Address
+                        </div>
+                        <div class="detail-value">
+                            <a href="mailto:{{ doc_request.user.email }}" class="text-primary text-decoration-none">
+                                {{ doc_request.user.email }}
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Document Information -->
+            <div class="glass-card shadow-lg mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-file-alt text-success me-2"></i>Document Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-file me-2"></i>Document Type
+                        </div>
+                        <div class="detail-value">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark" style="font-size: 1rem; padding: 8px 16px;">
+                                {{ doc_request.get_document_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-calendar-plus me-2"></i>Request Date
+                        </div>
+                        <div class="detail-value">
+                            {{ doc_request.created_at|date:"F d, Y" }} at {{ doc_request.created_at|date:"h:i A" }}
+                        </div>
+                    </div>
+                    {% if doc_request.updated_at != doc_request.created_at %}
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-sync me-2"></i>Last Updated
+                        </div>
+                        <div class="detail-value">
+                            {{ doc_request.updated_at|date:"F d, Y" }} at {{ doc_request.updated_at|date:"h:i A" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="glass-card shadow-lg">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-credit-card text-warning me-2"></i>Payment Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-info-circle me-2"></i>Payment Status
+                        </div>
+                        <div class="detail-value">
+                            <span class="badge {% if doc_request.payment_status == 'paid' %}bg-success{% elif doc_request.payment_status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}" style="font-size: 1rem; padding: 8px 16px;">
+                                {{ doc_request.get_payment_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">
+                            <i class="fas fa-money-bill-wave me-2"></i>Payment Method
+                        </div>
+                        <div class="detail-value">
+                            {% if doc_request.payment_method == 'online' %}
+                                <i class="fas fa-credit-card text-info me-2"></i>Online Payment
+                            {% else %}
+                                <i class="fas fa-money-bill text-success me-2"></i>Cash Payment
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column - Progress Tracker & Actions -->
+        <div class="col-lg-4">
+            <!-- Progress Tracker -->
+            <div class="glass-card shadow-lg mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-tasks text-info me-2"></i>Progress Tracker
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress-tracker">
+                        <div class="progress-step {% if doc_request.status in 'pending,processing,ready,completed' %}completed{% endif %}">
+                            <div>
+                                <strong class="d-block mb-1">Submitted</strong>
+                                <small class="text-muted">Request received</small>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-step {% if doc_request.status == 'processing' %}active{% elif doc_request.status in 'ready,completed' %}completed{% endif %}">
+                            <div>
+                                <strong class="d-block mb-1">Processing</strong>
+                                <small class="text-muted">Document preparation</small>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-step {% if doc_request.status == 'ready' %}active{% elif doc_request.status == 'completed' %}completed{% endif %}">
+                            <div>
+                                <strong class="d-block mb-1">Ready</strong>
+                                <small class="text-muted">Available for pickup</small>
+                            </div>
+                        </div>
+                        
+                        <div class="progress-step {% if doc_request.status == 'completed' %}active completed{% endif %}">
+                            <div>
+                                <strong class="d-block mb-1">Completed</strong>
+                                <small class="text-muted">Successfully delivered</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Action Buttons -->
+            <div class="glass-card shadow-lg">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-cogs text-danger me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        <div class="action-btn-group">
+                            <button name="action" value="mark_processing" class="action-btn btn btn-info text-white">
+                                <i class="fas fa-spinner me-2"></i>
+                                Mark Processing
+                            </button>
+                            
+                            <button name="action" value="mark_ready" class="action-btn btn btn-primary text-white">
+                                <i class="fas fa-box me-2"></i>
+                                Mark Ready
+                            </button>
+                            
+                            <button name="action" value="mark_picked_up" class="action-btn btn btn-success text-white">
+                                <i class="fas fa-check-circle me-2"></i>
+                                Mark Picked Up
+                            </button>
+                            
+                            <button name="action" value="mark_paid" class="action-btn btn btn-secondary text-white">
+                                <i class="fas fa-dollar-sign me-2"></i>
+                                Confirm Payment
+                            </button>
+                            
+                            <button name="action" value="reject" class="action-btn btn btn-danger text-white" onclick="return confirm('Are you sure you want to reject this request?');">
+                                <i class="fas fa-times-circle me-2"></i>
+                                Reject Request
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    // Add ripple effect to action buttons
+    const actionButtons = document.querySelectorAll('.action-btn');
+    
+    actionButtons.forEach(button => {
+        button.addEventListener('click', function(e) {
+            // Prevent form submission for animation
+            const rect = this.getBoundingClientRect();
+            const x = e.clientX - rect.left;
+            const y = e.clientY - rect.top;
+            
+            // Visual feedback only, form will submit naturally
+        });
+    });
+});
+</script>
+{% endblock %}

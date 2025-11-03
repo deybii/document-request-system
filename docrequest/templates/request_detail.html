@@ -1,0 +1,427 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Details - {{ doc_request.order_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.header-card {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 8px 24px rgba(102, 126, 234, 0.4);
+    position: relative;
+    overflow: hidden;
+}
+
+.header-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+}
+
+.info-row {
+    padding: 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+    transition: background 0.2s ease;
+}
+
+.info-row:hover {
+    background: rgba(102, 126, 234, 0.03);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    color: #212529;
+}
+
+.progress-tracker {
+    position: relative;
+    padding: 2.5rem 0;
+}
+
+.progress-tracker::before {
+    content: '';
+    position: absolute;
+    left: 28px;
+    top: 0;
+    bottom: 0;
+    width: 4px;
+    background: linear-gradient(to bottom, #667eea 0%, #764ba2 100%);
+}
+
+.progress-step {
+    position: relative;
+    padding-left: 80px;
+    margin-bottom: 2.5rem;
+}
+
+.progress-step:last-child {
+    margin-bottom: 0;
+}
+
+.progress-step::before {
+    content: '';
+    position: absolute;
+    left: 16px;
+    top: 8px;
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    background: white;
+    border: 4px solid #e0e0e0;
+    z-index: 1;
+    transition: all 0.3s ease;
+}
+
+.progress-step.completed::before {
+    background: #56ab2f;
+    border-color: #56ab2f;
+    box-shadow: 0 0 0 4px rgba(86, 171, 47, 0.2);
+}
+
+.progress-step.active::before {
+    background: #667eea;
+    border-color: #667eea;
+    box-shadow: 0 0 12px rgba(102, 126, 234, 0.6);
+    animation: pulse-ring 2s infinite;
+}
+
+@keyframes pulse-ring {
+    0%, 100% { box-shadow: 0 0 12px rgba(102, 126, 234, 0.6); }
+    50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
+}
+
+.progress-step h5 {
+    margin-bottom: 0.5rem;
+    color: #2c3e50;
+}
+
+.progress-step p {
+    margin-bottom: 0;
+    color: #6c757d;
+}
+
+.badge-xl {
+    font-size: 1.1rem;
+    padding: 0.75rem 1.25rem;
+}
+
+@media (max-width: 768px) {
+    .header-card {
+        padding: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 pb-5">
+    <!-- Back Button -->
+    <a href="{% url 'home' %}" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left me-2"></i>Back to Home
+    </a>
+
+    <!-- Header Card -->
+    <div class="header-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-3">
+                    <i class="fas fa-file-alt me-3"></i>Request Details
+                </h2>
+                <h3 class="font-monospace mb-2">{{ doc_request.order_id }}</h3>
+                <p class="mb-0 opacity-75">
+                    <i class="far fa-clock me-2"></i>
+                    Submitted on {{ doc_request.created_at|date:"F d, Y at h:i A" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end mt-3 mt-md-0">
+                <div class="d-inline-block text-start">
+                    <small class="text-white-50 d-block mb-2">Current Status</small>
+                    <span class="badge badge-xl {% if doc_request.status == 'pending' %}bg-warning text-dark{% elif doc_request.status == 'processing' %}bg-info{% elif doc_request.status == 'ready' %}bg-light text-primary{% elif doc_request.status == 'completed' %}bg-success{% else %}bg-danger{% endif %}">
+                        <i class="fas {% if doc_request.status == 'pending' %}fa-clock{% elif doc_request.status == 'processing' %}fa-spinner fa-spin{% elif doc_request.status == 'ready' %}fa-box{% elif doc_request.status == 'completed' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-2"></i>
+                        {{ doc_request.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Left Column - Request Information -->
+        <div class="col-lg-8 mb-4">
+            <!-- Document Information -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-file-alt text-primary me-2"></i>Document Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-file me-2"></i>Document Type
+                        </div>
+                        <div class="info-value">
+                            <span class="badge bg-secondary bg-opacity-10 text-dark" style="font-size: 1rem; padding: 8px 16px;">
+                                {{ doc_request.get_document_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-align-left me-2"></i>Purpose
+                        </div>
+                        <div class="info-value">{{ doc_request.purpose }}</div>
+                    </div>
+                    {% if doc_request.notes %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-sticky-note me-2"></i>Additional Notes
+                        </div>
+                        <div class="info-value">{{ doc_request.notes }}</div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Payment Information -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-credit-card text-success me-2"></i>Payment Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-money-bill-wave me-2"></i>Payment Method
+                        </div>
+                        <div class="info-value">
+                            {% if doc_request.payment_method == 'online' %}
+                                <i class="fas fa-credit-card text-info me-2"></i>Online Payment (GCash/Maya)
+                            {% else %}
+                                <i class="fas fa-money-bill text-success me-2"></i>Cash on Pickup
+                            {% endif %}
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-dollar-sign me-2"></i>Amount
+                        </div>
+                        <div class="info-value">
+                            <h4 class="text-success mb-0">₱{{ doc_request.payment_amount }}</h4>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-info-circle me-2"></i>Payment Status
+                        </div>
+                        <div class="info-value">
+                            <span class="badge {% if doc_request.payment_status == 'paid' %}bg-success{% elif doc_request.payment_status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}" style="font-size: 1rem; padding: 8px 16px;">
+                                <i class="fas {% if doc_request.payment_status == 'paid' %}fa-check-circle{% elif doc_request.payment_status == 'failed' %}fa-times-circle{% else %}fa-clock{% endif %} me-1"></i>
+                                {{ doc_request.get_payment_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% if doc_request.payment_reference %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-receipt me-2"></i>Payment Reference
+                        </div>
+                        <div class="info-value">
+                            <code class="text-primary">{{ doc_request.payment_reference }}</code>
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if doc_request.payment_date %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-check me-2"></i>Payment Date
+                        </div>
+                        <div class="info-value">
+                            {{ doc_request.payment_date|date:"F d, Y at h:i A" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+
+            <!-- Pickup Information -->
+            {% if doc_request.ready_for_pickup %}
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-box text-warning me-2"></i>Pickup Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-check-circle me-2"></i>Ready for Pickup
+                        </div>
+                        <div class="info-value">
+                            {% if doc_request.picked_up %}
+                                <span class="badge bg-info" style="font-size: 1rem; padding: 8px 16px;">
+                                    <i class="fas fa-box-open me-1"></i>Picked Up
+                                </span>
+                            {% else %}
+                                <span class="badge bg-success" style="font-size: 1rem; padding: 8px 16px;">
+                                    <i class="fas fa-box me-1"></i>Ready - Please claim at Registrar's Office
+                                </span>
+                            {% endif %}
+                        </div>
+                    </div>
+                    {% if doc_request.picked_up_date %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-check me-2"></i>Pickup Date
+                        </div>
+                        <div class="info-value">
+                            {{ doc_request.picked_up_date|date:"F d, Y at h:i A" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Right Column - Progress & Actions -->
+        <div class="col-lg-4">
+            <!-- Progress Tracker -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-tasks text-info me-2"></i>Progress Tracker
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="progress-tracker">
+                        <!-- Step 1: Submitted -->
+                        <div class="progress-step completed">
+                            <h5>
+                                <i class="fas fa-paper-plane text-success me-2"></i>Submitted
+                            </h5>
+                            <p>Request received and logged</p>
+                            <small class="text-muted">
+                                <i class="far fa-clock me-1"></i>
+                                {{ doc_request.created_at|date:"M d, Y - h:i A" }}
+                            </small>
+                        </div>
+                        
+                        <!-- Step 2: Processing -->
+                        <div class="progress-step {% if doc_request.status == 'processing' %}active{% elif doc_request.status in 'ready,completed' %}completed{% endif %}">
+                            <h5>
+                                <i class="fas fa-spinner {% if doc_request.status == 'processing' %}fa-spin{% endif %} me-2"></i>Processing
+                            </h5>
+                            <p>Document preparation in progress</p>
+                        </div>
+                        
+                        <!-- Step 3: Ready -->
+                        <div class="progress-step {% if doc_request.status == 'ready' %}active{% elif doc_request.status == 'completed' %}completed{% endif %}">
+                            <h5>
+                                <i class="fas fa-box me-2"></i>Ready for Pickup
+                            </h5>
+                            <p>Available for collection</p>
+                            {% if doc_request.ready_for_pickup and not doc_request.picked_up %}
+                                <div class="alert alert-success small mt-2 mb-0">
+                                    <i class="fas fa-info-circle me-1"></i>
+                                    Visit the Registrar's Office with your Order ID
+                                </div>
+                            {% endif %}
+                        </div>
+                        
+                        <!-- Step 4: Completed -->
+                        <div class="progress-step {% if doc_request.status == 'completed' %}active completed{% endif %}">
+                            <h5>
+                                <i class="fas fa-check-circle me-2"></i>Completed
+                            </h5>
+                            <p>Successfully delivered</p>
+                            {% if doc_request.picked_up_date %}
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>
+                                    {{ doc_request.picked_up_date|date:"M d, Y - h:i A" }}
+                                </small>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Quick Actions -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <a href="{% url 'home' %}" class="btn btn-outline-primary w-100 mb-2">
+                        <i class="fas fa-home me-2"></i>Back to Dashboard
+                    </a>
+                    
+                    {% if doc_request.payment_status == 'unpaid' and doc_request.payment_method == 'online' %}
+                    <a href="{% url 'simulated_payment' doc_request.order_id %}" class="btn btn-success w-100 mb-2">
+                        <i class="fas fa-credit-card me-2"></i>Complete Payment
+                    </a>
+                    {% endif %}
+                    
+                    <a href="{% url 'contact' %}" class="btn btn-outline-secondary w-100">
+                        <i class="fas fa-question-circle me-2"></i>Need Help?
+                    </a>
+                </div>
+            </div>
+
+            <!-- Important Notes -->
+            <div class="alert alert-info mb-0">
+                <h6 class="alert-heading">
+                    <i class="fas fa-info-circle me-2"></i>Important Notes
+                </h6>
+                <ul class="small mb-0">
+                    <li>Keep your Order ID safe for reference</li>
+                    <li>Bring a valid ID when claiming</li>
+                    <li>Processing time: 3-5 business days</li>
+                    <li>Office hours: Mon-Fri, 8:00 AM - 5:00 PM</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

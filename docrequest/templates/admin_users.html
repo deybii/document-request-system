@@ -1,0 +1,514 @@
+{% extends 'base.html' %}
+{% block title %}Manage Users{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.gradient-animated {
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.counter {
+    display: inline-block;
+    transition: all 0.5s ease;
+}
+
+.counter.counting {
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card .icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.modern-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modern-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+    transform: scale(1.01);
+}
+
+.filter-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-search {
+    position: relative;
+}
+
+.quick-search input {
+    border-radius: 24px;
+    padding: 12px 20px 12px 48px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.quick-search input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.quick-search .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+}
+
+.badge-glow {
+    position: relative;
+    box-shadow: 0 0 8px currentColor;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.custom-tooltip {
+    position: relative;
+}
+
+.custom-tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-bottom: 8px;
+    z-index: 1000;
+}
+
+.custom-tooltip:hover::before {
+    opacity: 1;
+}
+
+.action-btn {
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 16px;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 pb-5">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div class="mb-3 mb-md-0">
+            <h2 class="mb-2">
+                <i class="fas fa-users text-secondary"></i> 
+                <span class="ms-2">Manage Users</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                View, filter, and verify user accounts
+            </p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+            <button class="btn btn-primary" onclick="exportUsers()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card gradient-animated text-white shadow-lg" style="background: var(--primary-gradient);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.85rem;">Total Users</h6>
+                        <h2 class="display-4 mb-0 fw-bold">
+                            <span class="counter" data-target="{{ page_obj.paginator.count|default:0  }}">0</span>
+                        </h2>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="fas fa-users fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card gradient-animated text-white shadow-lg" style="background: var(--success-gradient);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.85rem;">Verified</h6>
+                        <h2 class="display-4 mb-0 fw-bold">
+                            <span class="counter" data-target="{{ verified_count|default:0 }}">0</span>
+                        </h2>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="fas fa-check-circle fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card gradient-animated text-white shadow-lg" style="background: var(--warning-gradient);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.85rem;">Pending</h6>
+                        <h2 class="display-4 mb-0 fw-bold">
+                            <span class="counter" data-target="{{ pending_count|default:0 }}">0</span>
+                        </h2>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="fas fa-clock fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card gradient-animated text-white shadow-lg" style="background: var(--info-gradient);">
+                <div class="d-flex justify-content-between align-items-center">
+                    <div>
+                        <h6 class="text-white-50 mb-2 text-uppercase" style="letter-spacing: 1px; font-size: 0.85rem;">Students</h6>
+                        <h2 class="display-4 mb-0 fw-bold">
+                            <span class="counter" data-target="{{ student_count|default:0 }}">0</span>
+                        </h2>
+                    </div>
+                    <div class="icon-wrapper">
+                        <i class="fas fa-user-graduate fa-2x text-white"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-user-tag me-1"></i>Role
+                </label>
+                <select name="role" class="form-select">
+                    <option value="">All Roles</option>
+                    <option value="student" {% if role_filter == 'student' %}selected{% endif %}>Student</option>
+                    <option value="alumni" {% if role_filter == 'alumni' %}selected{% endif %}>Alumni</option>
+                    <option value="faculty" {% if role_filter == 'faculty' %}selected{% endif %}>Faculty</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-check-circle me-1"></i>Verification
+                </label>
+                <select name="verified" class="form-select">
+                    <option value="">All Users</option>
+                    <option value="yes" {% if verified_filter == 'yes' %}selected{% endif %}>Verified</option>
+                    <option value="no" {% if verified_filter == 'no' %}selected{% endif %}>Unverified</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-search me-1"></i>Search
+                </label>
+                <div class="quick-search">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="search" class="form-control" placeholder="Name, email, or ID..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100 action-btn">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'admin_users' %}" class="btn btn-secondary w-100 action-btn">
+                    <i class="fas fa-sync me-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Users Table -->
+    <div class="glass-card shadow-lg">
+        <div class="card-header bg-transparent border-0 pt-4 pb-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-list text-primary me-2"></i>User Directory
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table modern-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3">
+                                <i class="fas fa-id-card me-2"></i>School ID
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-user me-2"></i>Name
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-user-tag me-2"></i>Role
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-check-circle me-2"></i>Status
+                            </th>
+                            <th class="py-3 text-center">
+                                <i class="fas fa-cog me-2"></i>Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for profile in page_obj %}
+                        <tr>
+                            <td class="px-4 py-3">
+                                <span class="font-monospace fw-bold text-primary">{{ profile.school_id }}</span>
+                            </td>
+                            <td class="py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <strong class="d-block">{{ profile.user.get_full_name }}</strong>
+                                        <small class="text-muted">@{{ profile.user.username }}</small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <a href="mailto:{{ profile.user.email }}" class="text-decoration-none text-dark custom-tooltip" data-tooltip="Send email">
+                                    <i class="fas fa-envelope me-2 text-muted"></i>{{ profile.user.email }}
+                                </a>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge {% if profile.role == 'student' %}bg-primary{% elif profile.role == 'alumni' %}bg-success{% else %}bg-warning{% endif %} badge-glow">
+                                    <i class="fas {% if profile.role == 'student' %}fa-user-graduate{% elif profile.role == 'alumni' %}fa-user-tie{% else %}fa-chalkboard-teacher{% endif %} me-1"></i>
+                                    {{ profile.get_role_display }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                {% if profile.is_verified %}
+                                    <span class="badge bg-success badge-glow">
+                                        <i class="fas fa-check-circle me-1"></i>Verified
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-warning text-dark badge-glow">
+                                        <i class="fas fa-clock me-1"></i>Pending
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3 text-center">
+                                <a href="{% url 'admin_verify_user' profile.id %}" 
+                                   class="btn btn-sm {% if profile.is_verified %}btn-outline-warning{% else %}btn-outline-success{% endif %} action-btn custom-tooltip" 
+                                   data-tooltip="{% if profile.is_verified %}Unverify user{% else %}Verify user{% endif %}">
+                                    <i class="fas {% if profile.is_verified %}fa-times-circle{% else %}fa-check-circle{% endif %} me-1"></i>
+                                    {% if profile.is_verified %}Unverify{% else %}Verify{% endif %}
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="6" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">No users found matching your criteria</p>
+                                <small class="text-muted">Try adjusting your filters</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-lg">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if verified_filter %}&verified={{ verified_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if role_filter %}&role={{ role_filter }}{% endif %}{% if verified_filter %}&verified={{ verified_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+// Counter animation
+function animateCounter(element) {
+    const target = parseInt(element.getAttribute('data-target'));
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    
+    element.classList.add('counting');
+    
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+            element.classList.remove('counting');
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// Initialize animations
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        document.querySelectorAll('.counter').forEach(counter => {
+            animateCounter(counter);
+        });
+    }, 300);
+});
+
+// Export functionality
+function exportUsers() {
+    alert('Export functionality:\n• CSV Export\n• PDF Report\n• Excel Spreadsheet\n\nWould be implemented here.');
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.querySelector('.quick-search input')?.focus();
+    }
+});
+</script>
+{% endblock %}

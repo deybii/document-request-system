@@ -1,0 +1,212 @@
+{% extends 'base.html' %}
+
+{% block title %}Request Successful{% endblock %}
+
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card shadow-lg border-success">
+                <div class="card-header bg-success text-white text-center">
+                    <h2 class="mb-0">✅ Request Submitted Successfully!</h2>
+                    <!-- ✅ Added School ID to header -->
+                    <p class="mb-0 mt-2">
+                        <i class="fas fa-id-card"></i> School ID: <strong>{{ doc_request.user.username }}</strong>
+                    </p>
+                </div>
+                <div class="card-body text-center p-5">
+                    <!-- Order ID Display -->
+                    <div class="mb-4">
+                        <h3 class="text-muted">Your Order ID</h3>
+                        <div class="display-3 text-primary fw-bold font-monospace">
+                            {{ doc_request.order_id }}
+                        </div>
+                        <p class="text-muted mt-2">Please save this Order ID for your records</p>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- ✅ NEW: User Information Card -->
+                    <div class="card mb-4 border-primary">
+                        <div class="card-body">
+                            <div class="row text-start">
+                                <div class="col-md-6">
+                                    <h6 class="text-muted mb-3">👤 Student Information</h6>
+                                    <p class="mb-2">
+                                        <strong>Name:</strong> {{ doc_request.user.get_full_name }}
+                                    </p>
+                                    <p class="mb-2">
+                                        <strong>School ID:</strong> 
+                                        <span class="badge bg-primary">{{ doc_request.user.username }}</span>
+                                    </p>
+                                    <p class="mb-0">
+                                        <strong>Email:</strong> 
+                                        <small>{{ doc_request.user.email }}</small>
+                                    </p>
+                                </div>
+                                <div class="col-md-6">
+                                    {% if doc_request.user.profile %}
+                                    <h6 class="text-muted mb-3">🎓 Academic Details</h6>
+                                    <p class="mb-2">
+                                        <strong>Role:</strong> 
+                                        <span class="badge bg-secondary">{{ doc_request.user.profile.get_role_display }}</span>
+                                    </p>
+                                    {% if doc_request.user.profile.department %}
+                                    <p class="mb-2">
+                                        <strong>Department:</strong> {{ doc_request.user.profile.department }}
+                                    </p>
+                                    {% endif %}
+                                    {% if doc_request.user.profile.course %}
+                                    <p class="mb-2">
+                                        <strong>Course:</strong> {{ doc_request.user.profile.course }}
+                                    </p>
+                                    {% endif %}
+                                    {% if doc_request.user.profile.year_level %}
+                                    <p class="mb-0">
+                                        <strong>Year Level:</strong> {{ doc_request.user.profile.year_level }}
+                                    </p>
+                                    {% endif %}
+                                    {% endif %}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Request Details -->
+                    <div class="text-start">
+                        <h5 class="mb-3">📋 Request Details</h5>
+                        <table class="table table-borderless">
+                            <tr>
+                                <th width="40%">Document Type:</th>
+                                <td>{{ doc_request.get_document_type_display }}</td>
+                            </tr>
+                            <tr>
+                                <th>Purpose:</th>
+                                <td>{{ doc_request.purpose }}</td>
+                            </tr>
+                            {% if doc_request.notes %}
+                            <tr>
+                                <th>Additional Notes:</th>
+                                <td>{{ doc_request.notes }}</td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Payment Method:</th>
+                                <td>
+                                    {% if doc_request.payment_method == 'online' %}
+                                        <span class="badge bg-info">💳 Online Payment</span>
+                                    {% else %}
+                                        <span class="badge bg-success">💵 Cash on Pickup</span>
+                                    {% endif %}
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Payment Amount:</th>
+                                <td><strong class="text-success">₱{{ doc_request.payment_amount }}</strong></td>
+                            </tr>
+                            <tr>
+                                <th>Payment Status:</th>
+                                <td>
+                                    <span class="badge bg-{% if doc_request.payment_status == 'paid' %}success{% else %}warning{% endif %}">
+                                        {{ doc_request.get_payment_status_display }}
+                                    </span>
+                                </td>
+                            </tr>
+                            {% if doc_request.payment_reference %}
+                            <tr>
+                                <th>Payment Reference:</th>
+                                <td><code>{{ doc_request.payment_reference }}</code></td>
+                            </tr>
+                            {% endif %}
+                            <tr>
+                                <th>Status:</th>
+                                <td>
+                                    <span class="badge bg-warning">{{ doc_request.get_status_display }}</span>
+                                </td>
+                            </tr>
+                            <tr>
+                                <th>Submitted:</th>
+                                <td>{{ doc_request.created_at|date:"F d, Y g:i A" }}</td>
+                            </tr>
+                        </table>
+                    </div>
+
+                    <hr class="my-4">
+
+                    <!-- Payment Instructions -->
+                    {% if doc_request.payment_method == 'cash' %}
+                    <div class="alert alert-warning">
+                        <h5 class="alert-heading">💵 Cash Payment Instructions</h5>
+                        <p>Please bring <strong>₱{{ doc_request.payment_amount }}</strong> in cash when you pick up your document.</p>
+                        <hr>
+                        <p class="mb-0">
+                            <strong>Important:</strong> Present your Order ID 
+                            (<strong class="text-primary">{{ doc_request.order_id }}</strong>) 
+                            and School ID (<strong class="text-primary">{{ doc_request.user.username }}</strong>)
+                            to the registrar when picking up.
+                        </p>
+                    </div>
+                    {% else %}
+                    <div class="alert alert-success">
+                        <h5 class="alert-heading">✅ Payment Completed</h5>
+                        <p>Your payment has been processed successfully.</p>
+                        {% if doc_request.payment_reference %}
+                        <p class="mb-0">
+                            <strong>Reference Number:</strong> 
+                            <code>{{ doc_request.payment_reference }}</code>
+                        </p>
+                        {% endif %}
+                    </div>
+                    {% endif %}
+
+                    <!-- Next Steps -->
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">📌 What's Next?</h5>
+                        <ol class="text-start mb-0">
+                            <li>Your request is now being processed</li>
+                            <li>Processing time: <strong>3-5 business days</strong></li>
+                            <li>You'll be notified when your document is ready for pickup</li>
+                            <li>Bring your Order ID (<strong>{{ doc_request.order_id }}</strong>) and School ID (<strong>{{ doc_request.user.username }}</strong>) when picking up</li>
+                            {% if doc_request.payment_method == 'cash' %}
+                            <li>Pay ₱{{ doc_request.payment_amount }} in cash at pickup</li>
+                            {% endif %}
+                        </ol>
+                    </div>
+
+                    <!-- Action Buttons -->
+                    <div class="d-grid gap-2 mt-4">
+                        <a href="{% url 'request' %}" class="btn btn-primary btn-lg">
+                            📋 View My Requests
+                        </a>
+                        <a href="{% url 'request' %}" class="btn btn-outline-primary">
+                            ➕ Submit Another Request
+                        </a>
+                        <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                            🏠 Go to Dashboard
+                        </a>
+                        <button onclick="window.print()" class="btn btn-outline-info">
+                            🖨️ Print This Page
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<style>
+@media print {
+    .btn, .alert-info:last-of-type {
+        display: none !important;
+    }
+    .card {
+        border: none !important;
+        box-shadow: none !important;
+    }
+}
+
+.font-monospace {
+    font-family: 'Courier New', monospace;
+}
+</style>
+{% endblock %}

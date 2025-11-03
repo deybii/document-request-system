@@ -1,0 +1,474 @@
+{% extends 'base.html' %}
+
+{% block title %}Home - Document Request System{% endblock %}
+
+{% block extra_css %}
+<style>
+    .welcome-banner {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        color: white;
+        padding: 2.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+    }
+    .stat-card {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        transition: transform 0.3s ease, box-shadow 0.3s ease;
+        height: 100%;
+    }
+    .stat-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+    }
+    .stat-icon {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+    }
+    .quick-action-card {
+        border: none;
+        border-radius: 15px;
+        padding: 1.5rem;
+        text-align: center;
+        transition: all 0.3s ease;
+        cursor: pointer;
+        text-decoration: none;
+        color: inherit;
+        display: block;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .quick-action-card:hover {
+        transform: translateY(-5px);
+        box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+        color: inherit;
+    }
+    .quick-action-icon {
+        font-size: 3rem;
+        margin-bottom: 1rem;
+    }
+    .recent-activity {
+        border: none;
+        border-radius: 15px;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .timeline-item {
+        border-left: 3px solid #667eea;
+        padding-left: 1.5rem;
+        padding-bottom: 1.5rem;
+        position: relative;
+    }
+    .timeline-item:last-child {
+        padding-bottom: 0;
+    }
+    .timeline-dot {
+        position: absolute;
+        left: -8px;
+        top: 5px;
+        width: 12px;
+        height: 12px;
+        border-radius: 50%;
+        background-color: #667eea;
+    }
+    .info-card {
+        background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        color: white;
+        border: none;
+        border-radius: 15px;
+        padding: 1.5rem;
+        box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    
+    /* Active Request Banner */
+    .active-request-banner {
+        background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+        color: white;
+        padding: 1.5rem;
+        border-radius: 15px;
+        margin-bottom: 2rem;
+        box-shadow: 0 4px 12px rgba(86, 171, 47, 0.3);
+        animation: slideInDown 0.5s ease;
+    }
+    
+    @keyframes slideInDown {
+        from {
+            opacity: 0;
+            transform: translateY(-20px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .active-request-banner i.fa-star {
+        animation: pulse 2s infinite;
+    }
+    
+    @keyframes pulse {
+        0%, 100% { opacity: 1; transform: scale(1); }
+        50% { opacity: 0.8; transform: scale(1.1); }
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Welcome Banner -->
+<div class="welcome-banner">
+    <div class="row align-items-center">
+        <div class="col-md-8">
+            <h1 class="mb-2">
+                <i class="fas fa-hand-wave me-2"></i>Welcome back, {{ user.first_name }}!
+            </h1>
+            <p class="mb-0 opacity-75">
+                <i class="fas fa-calendar-day me-2"></i>
+                Track your document requests and manage your account
+            </p>
+            {% if user_profile %}
+            <p class="mb-0 mt-2 small opacity-75">
+                <i class="fas fa-id-badge me-2"></i>School ID: {{ user_profile.school_id }} | 
+                <i class="fas fa-user-tag me-2"></i>{{ user_profile.get_role_display }}
+            </p>
+            {% endif %}
+        </div>
+        <div class="col-md-4 text-end">
+            {% if active_request %}
+            <button class="btn btn-light btn-lg" disabled title="You have an active request">
+                <i class="fas fa-lock me-2"></i>New Request
+            </button>
+            {% else %}
+            <a href="{% url 'request' %}" class="btn btn-light btn-lg">
+                <i class="fas fa-plus-circle me-2"></i><strong>New Request</strong>
+            </a>
+            {% endif %}
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Active Request Banner -->
+{% if active_request %}
+<div class="active-request-banner">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-star fa-3x me-4"></i>
+        <div class="flex-grow-1">
+            <h4 class="mb-2">
+                <i class="fas fa-file-alt me-2"></i>Active Request in Progress
+            </h4>
+            <div class="row">
+                <div class="col-md-4">
+                    <p class="mb-1 small opacity-75">Order ID</p>
+                    <h5 class="font-monospace mb-0">{{ active_request.order_id }}</h5>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1 small opacity-75">Document Type</p>
+                    <p class="mb-0">{{ active_request.get_document_type_display }}</p>
+                </div>
+                <div class="col-md-4">
+                    <p class="mb-1 small opacity-75">Status</p>
+                    <span class="badge bg-{% if active_request.status == 'pending' %}light text-dark{% elif active_request.status == 'processing' %}info{% else %}primary{% endif %} fs-6 px-3 py-1">
+                        <i class="fas {% if active_request.status == 'pending' %}fa-clock{% elif active_request.status == 'processing' %}fa-spinner fa-spin{% else %}fa-box{% endif %} me-1"></i>
+                        {{ active_request.get_status_display }}
+                    </span>
+                </div>
+            </div>
+        </div>
+        <div>
+            <a href="{% url 'request_detail' active_request.order_id %}" class="btn btn-light">
+                <i class="fas fa-eye me-2"></i>View Details
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+
+<!-- Statistics Cards -->
+<div class="row mb-4">
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-center">
+            <div class="card-body">
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h5 class="card-title text-muted">Total Requests</h5>
+                <h2 class="text-primary mb-0">{{ total_requests }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-center">
+            <div class="card-body">
+                <div class="stat-icon text-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h5 class="card-title text-muted">Pending</h5>
+                <h2 class="text-warning mb-0">{{ pending_requests }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-center">
+            <div class="card-body">
+                <div class="stat-icon text-primary">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h5 class="card-title text-muted">Ready</h5>
+                <h2 class="text-primary mb-0">{{ ready_requests }}</h2>
+            </div>
+        </div>
+    </div>
+
+    <div class="col-md-3 mb-3">
+        <div class="card stat-card text-center">
+            <div class="card-body">
+                <div class="stat-icon text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h5 class="card-title text-muted">Completed</h5>
+                <h2 class="text-success mb-0">{{ completed_requests }}</h2>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Quick Actions -->
+<div class="row mb-4">
+    <div class="col-md-12">
+        <h4 class="mb-3">
+            <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+        </h4>
+    </div>
+    <div class="col-md-3 mb-3">
+        {% if active_request %}
+        <div class="quick-action-card" style="background-color: #e0e0e0; opacity: 0.6; cursor: not-allowed;">
+            <div class="quick-action-icon">
+                <i class="fas fa-lock"></i>
+            </div>
+            <h5>New Request</h5>
+            <p class="text-muted mb-0 small">Active request in progress</p>
+        </div>
+        {% else %}
+        <a href="{% url 'request' %}" class="quick-action-card" style="background-color: #e3f2fd;">
+            <div class="quick-action-icon">
+                <i class="fas fa-plus-circle"></i>
+            </div>
+            <h5>New Request</h5>
+            <p class="text-muted mb-0 small">Submit a new document</p>
+        </a>
+        {% endif %}
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{% url 'my_requests' %}" class="quick-action-card" style="background-color: #f3e5f5;">
+            <div class="quick-action-icon">
+                <i class="fas fa-list"></i>
+            </div>
+            <h5>My Requests</h5>
+            <p class="text-muted mb-0 small">View all your requests</p>
+        </a>
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{% url 'contact' %}" class="quick-action-card" style="background-color: #fff3e0;">
+            <div class="quick-action-icon">
+                <i class="fas fa-envelope"></i>
+            </div>
+            <h5>Contact Us</h5>
+            <p class="text-muted mb-0 small">Get help and support</p>
+        </a>
+    </div>
+    <div class="col-md-3 mb-3">
+        <a href="{% url 'about' %}" class="quick-action-card" style="background-color: #e8f5e9;">
+            <div class="quick-action-icon">
+                <i class="fas fa-info-circle"></i>
+            </div>
+            <h5>About</h5>
+            <p class="text-muted mb-0 small">Learn more about us</p>
+        </a>
+    </div>
+</div>
+
+<div class="row">
+    <!-- Recent Activity -->
+    <div class="col-md-8 mb-4">
+        <div class="card recent-activity">
+            <div class="card-header bg-white">
+                <h5 class="mb-0">
+                    <i class="fas fa-history text-secondary me-2"></i>Recent Activity
+                </h5>
+            </div>
+            <div class="card-body">
+                {% if recent_requests %}
+                    {% for request in recent_requests %}
+                    <div class="timeline-item">
+                        <div class="timeline-dot"></div>
+                        <div class="d-flex justify-content-between align-items-start">
+                            <div class="flex-grow-1">
+                                <div class="d-flex align-items-center mb-2">
+                                    <h6 class="mb-0 me-2">{{ request.get_document_type_display }}</h6>
+                                    {% if active_request and request.id == active_request.id %}
+                                        <span class="badge bg-warning text-dark">
+                                            <i class="fas fa-star me-1"></i>Active
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                <p class="text-muted mb-1 small">
+                                    <i class="fas fa-file-alt me-1"></i>{{ request.purpose|truncatewords:15 }}
+                                </p>
+                                <p class="mb-2">
+                                    <small class="text-muted">
+                                        <i class="far fa-clock me-1"></i>{{ request.created_at|date:"M d, Y - h:i A" }}
+                                    </small>
+                                </p>
+                                
+                                <!-- Payment Status -->
+                                <div class="d-flex gap-2 mb-2">
+                                    <span class="badge bg-{% if request.payment_status == 'paid' %}success{% elif request.payment_status == 'failed' %}danger{% else %}warning text-dark{% endif %}">
+                                        <i class="fas {% if request.payment_status == 'paid' %}fa-check-circle{% elif request.payment_status == 'failed' %}fa-times-circle{% else %}fa-credit-card{% endif %} me-1"></i>
+                                        {{ request.get_payment_status_display }}
+                                    </span>
+                                    
+                                    <!-- Pickup Status -->
+                                    {% if request.ready_for_pickup and not request.picked_up %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-box me-1"></i>Ready for Pickup
+                                        </span>
+                                    {% elif request.picked_up %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-box-open me-1"></i>Picked Up
+                                        </span>
+                                    {% endif %}
+                                </div>
+                                
+                                <small class="text-primary">
+                                    <i class="fas fa-barcode me-1"></i>Order ID: <strong>{{ request.order_id }}</strong>
+                                </small>
+                            </div>
+                            <span class="badge bg-{% if request.status == 'pending' %}warning text-dark{% elif request.status == 'completed' %}success{% elif request.status == 'processing' %}info{% elif request.status == 'ready' %}primary{% else %}danger{% endif %}">
+                                <i class="fas {% if request.status == 'pending' %}fa-clock{% elif request.status == 'processing' %}fa-spinner fa-spin{% elif request.status == 'ready' %}fa-box{% elif request.status == 'completed' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                                {{ request.get_status_display }}
+                            </span>
+                        </div>
+                    </div>
+                    {% endfor %}
+                    <div class="text-center mt-3">
+                        <a href="{% url 'my_requests' %}" class="btn btn-outline-primary btn-sm">
+                            <i class="fas fa-list me-2"></i>View All Requests
+                        </a>
+                    </div>
+                {% else %}
+                    <div class="text-center py-5">
+                        <div style="font-size: 4rem; opacity: 0.3;">
+                            <i class="fas fa-inbox"></i>
+                        </div>
+                        <h5 class="text-muted mt-3">No requests yet</h5>
+                        <p class="text-muted">Start by submitting your first document request</p>
+                        {% if not active_request %}
+                        <a href="{% url 'request' %}" class="btn btn-primary mt-2">
+                            <i class="fas fa-plus-circle me-2"></i>Submit Request
+                        </a>
+                        {% endif %}
+                    </div>
+                {% endif %}
+            </div>
+        </div>
+    </div>
+
+    <!-- Info Cards -->
+    <div class="col-md-4 mb-4">
+        <!-- ✅ User Profile Card -->
+        {% if user_profile %}
+        <div class="card mb-3" style="border: none; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div class="card-body text-center">
+                <i class="fas fa-user-circle fa-4x text-primary mb-3"></i>
+                <h5 class="mb-1">{{ user.get_full_name }}</h5>
+                <p class="text-muted small mb-2">
+                    <i class="fas fa-id-badge me-1"></i>{{ user_profile.school_id }}
+                </p>
+                <span class="badge bg-{% if user_profile.role == 'student' %}primary{% elif user_profile.role == 'alumni' %}success{% else %}warning{% endif %} mb-2">
+                    <i class="fas {% if user_profile.role == 'student' %}fa-user-graduate{% elif user_profile.role == 'alumni' %}fa-user-tie{% else %}fa-chalkboard-teacher{% endif %} me-1"></i>
+                    {{ user_profile.get_role_display }}
+                </span>
+                {% if user_profile.is_verified %}
+                <p class="text-success small mb-0">
+                    <i class="fas fa-check-circle me-1"></i>Verified Account
+                </p>
+                {% else %}
+                <p class="text-warning small mb-0">
+                    <i class="fas fa-clock me-1"></i>Pending Verification
+                </p>
+                {% endif %}
+            </div>
+        </div>
+        {% endif %}
+        
+        <!-- Announcement Card -->
+        <div class="info-card mb-3">
+            <h5 class="mb-2">
+                <i class="fas fa-bullhorn me-2"></i>Announcement
+            </h5>
+            <p class="mb-0 small">
+                System maintenance scheduled for next Sunday, 2:00 AM - 6:00 AM. 
+                Services may be temporarily unavailable during this time.
+            </p>
+        </div>
+
+        <!-- Document Status Guide -->
+        <div class="card mb-3" style="border: none; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-info-circle text-info me-2"></i>Document Status Guide
+                </h5>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-warning text-dark me-3" style="width: 100px;">
+                                <i class="fas fa-clock me-1"></i>Pending
+                            </span>
+                            <small class="text-muted">Awaiting processing</small>
+                        </div>
+                    </li>
+                    <li class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-info me-3" style="width: 100px;">
+                                <i class="fas fa-spinner me-1"></i>Processing
+                            </span>
+                            <small class="text-muted">Being prepared</small>
+                        </div>
+                    </li>
+                    <li class="mb-3 pb-3 border-bottom">
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-primary me-3" style="width: 100px;">
+                                <i class="fas fa-box me-1"></i>Ready
+                            </span>
+                            <small class="text-muted">Available for collection</small>
+                        </div>
+                    </li>
+                    <li>
+                        <div class="d-flex align-items-center">
+                            <span class="badge bg-success me-3" style="width: 100px;">
+                                <i class="fas fa-check-circle me-1"></i>Completed
+                            </span>
+                            <small class="text-muted">Successfully delivered</small>
+                        </div>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Help Card -->
+        <div class="card" style="border: none; border-radius: 15px; box-shadow: 0 2px 8px rgba(0,0,0,0.1);">
+            <div class="card-body">
+                <h5 class="card-title">
+                    <i class="fas fa-life-ring text-danger me-2"></i>Need Help?
+                </h5>
+                <p class="small text-muted mb-3">Our support team is here to assist you with any questions or concerns</p>
+                <a href="{% url 'contact' %}" class="btn btn-sm btn-outline-primary w-100">
+                    <i class="fas fa-envelope me-2"></i>Contact Support
+                </a>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

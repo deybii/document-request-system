@@ -1,0 +1,496 @@
+{% extends 'base.html' %}
+
+{% block title %}About Us - Document Request System{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.hero-section {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 20px;
+    padding: 4rem 2rem;
+    color: white;
+    text-align: center;
+    margin-bottom: 3rem;
+    position: relative;
+    overflow: hidden;
+    box-shadow: 0 12px 32px rgba(102, 126, 234, 0.4);
+}
+
+.hero-section::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    animation: shimmer 3s infinite;
+}
+
+@keyframes shimmer {
+    0%, 100% { opacity: 0.5; }
+    50% { opacity: 1; }
+}
+
+.hero-section h1 {
+    font-size: 3rem;
+    font-weight: 700;
+    margin-bottom: 1rem;
+    text-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.hero-section p {
+    font-size: 1.25rem;
+    opacity: 0.95;
+    max-width: 700px;
+    margin: 0 auto;
+}
+
+.feature-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    transition: all 0.3s ease;
+    border: 1px solid rgba(0, 0, 0, 0.05);
+    height: 100%;
+    box-shadow: var(--shadow-sm);
+}
+
+.feature-card:hover {
+    transform: translateY(-8px);
+    box-shadow: var(--shadow-lg);
+}
+
+.feature-icon {
+    width: 80px;
+    height: 80px;
+    margin: 0 auto 1.5rem;
+    border-radius: 20px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2.5rem;
+    transition: all 0.3s ease;
+}
+
+.feature-card:hover .feature-icon {
+    transform: rotate(360deg) scale(1.1);
+}
+
+.feature-icon.primary {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+}
+
+.feature-icon.success {
+    background: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    color: white;
+}
+
+.feature-icon.info {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+}
+
+.feature-icon.warning {
+    background: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    color: white;
+}
+
+.section-title {
+    position: relative;
+    display: inline-block;
+    font-weight: 700;
+    font-size: 2rem;
+    margin-bottom: 2rem;
+    color: #2c3e50;
+}
+
+.section-title::after {
+    content: '';
+    position: absolute;
+    bottom: -10px;
+    left: 0;
+    width: 60px;
+    height: 4px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    border-radius: 2px;
+}
+
+.document-list {
+    list-style: none;
+    padding: 0;
+}
+
+.document-list li {
+    padding: 1rem;
+    margin-bottom: 0.5rem;
+    background: white;
+    border-radius: 12px;
+    transition: all 0.3s ease;
+    border-left: 4px solid #667eea;
+    box-shadow: var(--shadow-sm);
+}
+
+.document-list li:hover {
+    transform: translateX(8px);
+    box-shadow: var(--shadow-md);
+}
+
+.document-list li i {
+    color: #667eea;
+    margin-right: 0.75rem;
+    font-size: 1.1rem;
+}
+
+.process-step {
+    position: relative;
+    padding: 2rem;
+    background: white;
+    border-radius: 16px;
+    margin-bottom: 2rem;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+    border-left: 5px solid #667eea;
+}
+
+.process-step:hover {
+    transform: translateX(8px);
+    box-shadow: var(--shadow-md);
+}
+
+.process-number {
+    position: absolute;
+    top: -15px;
+    left: 20px;
+    width: 50px;
+    height: 50px;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.25rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.process-step h4 {
+    margin-top: 1rem;
+    color: #2c3e50;
+    font-weight: 600;
+}
+
+.info-box {
+    background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    color: white;
+    padding: 2rem;
+    border-radius: 16px;
+    margin-top: 3rem;
+    box-shadow: 0 8px 24px rgba(79, 172, 254, 0.4);
+}
+
+.info-box i {
+    font-size: 2rem;
+    margin-right: 1rem;
+}
+
+.stats-card {
+    background: white;
+    border-radius: 16px;
+    padding: 2rem;
+    text-align: center;
+    box-shadow: var(--shadow-sm);
+    transition: all 0.3s ease;
+}
+
+.stats-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-md);
+}
+
+.stats-number {
+    font-size: 3rem;
+    font-weight: 700;
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    background-clip: text;
+}
+
+.stats-label {
+    font-size: 1rem;
+    color: #6c757d;
+    margin-top: 0.5rem;
+}
+
+@media (max-width: 768px) {
+    .hero-section h1 {
+        font-size: 2rem;
+    }
+    
+    .hero-section p {
+        font-size: 1rem;
+    }
+    
+    .section-title {
+        font-size: 1.5rem;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<!-- Hero Section -->
+<div class="hero-section">
+    <i class="fas fa-graduation-cap fa-3x mb-4" style="opacity: 0.9;"></i>
+    <h1>About Our Document Request System</h1>
+    <p>Streamlining academic document processing for students, alumni, and faculty</p>
+</div>
+
+<!-- Mission Section -->
+<div class="row mb-5">
+    <div class="col-lg-12">
+        <div class="glass-card p-5">
+            <h2 class="section-title">
+                <i class="fas fa-bullseye text-primary me-2"></i>Our Mission
+            </h2>
+            <p class="lead" style="color: #2c3e50; line-height: 1.8;">
+                To provide an efficient, user-friendly platform for students, alumni, and faculty to submit and track 
+                academic document requests online, eliminating the need for physical visits to the registrar's office 
+                and reducing processing time. We believe in making academic administrative processes simple, transparent, 
+                and accessible to everyone in our academic community.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Key Features -->
+<div class="row mb-5">
+    <div class="col-12 mb-4">
+        <h2 class="section-title">
+            <i class="fas fa-star text-warning me-2"></i>What We Do
+        </h2>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="feature-card">
+            <div class="feature-icon primary">
+                <i class="fas fa-clock"></i>
+            </div>
+            <h4>24/7 Availability</h4>
+            <p class="text-muted">Submit document requests anytime, anywhere, at your convenience</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="feature-card">
+            <div class="feature-icon success">
+                <i class="fas fa-sync-alt"></i>
+            </div>
+            <h4>Real-Time Tracking</h4>
+            <p class="text-muted">Monitor the status of your requests with live updates</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="feature-card">
+            <div class="feature-icon info">
+                <i class="fas fa-bell"></i>
+            </div>
+            <h4>Instant Notifications</h4>
+            <p class="text-muted">Get notified immediately about request updates</p>
+        </div>
+    </div>
+    <div class="col-md-6 col-lg-3 mb-4">
+        <div class="feature-card">
+            <div class="feature-icon warning">
+                <i class="fas fa-file-invoice"></i>
+            </div>
+            <h4>Wide Range</h4>
+            <p class="text-muted">Access multiple academic document types in one platform</p>
+        </div>
+    </div>
+</div>
+
+<!-- Available Documents -->
+<div class="row mb-5">
+    <div class="col-12 mb-4">
+        <h2 class="section-title">
+            <i class="fas fa-folder-open text-info me-2"></i>Available Academic Documents
+        </h2>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="mb-4 text-primary">
+                <i class="fas fa-graduation-cap me-2"></i>Academic Records
+            </h5>
+            <ul class="document-list">
+                <li><i class="fas fa-scroll"></i>Official Transcript of Records (TOR)</li>
+                <li><i class="fas fa-certificate"></i>Diploma</li>
+                <li><i class="fas fa-file-alt"></i>Certificate of Grades</li>
+                <li><i class="fas fa-chart-line"></i>Grade Point Average (GPA) Certificate</li>
+                <li><i class="fas fa-book"></i>Course Description / Syllabus</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="mb-4 text-success">
+                <i class="fas fa-stamp me-2"></i>Certifications & Clearances
+            </h5>
+            <ul class="document-list">
+                <li><i class="fas fa-check-circle"></i>Certificate of Enrollment</li>
+                <li><i class="fas fa-user-graduate"></i>Certificate of Graduation</li>
+                <li><i class="fas fa-award"></i>Honorable Dismissal</li>
+                <li><i class="fas fa-shield-alt"></i>Good Moral Certificate</li>
+                <li><i class="fas fa-clipboard-check"></i>Certification of Authenticity</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="mb-4 text-info">
+                <i class="fas fa-id-card me-2"></i>Identification & Verification
+            </h5>
+            <ul class="document-list">
+                <li><i class="fas fa-id-badge"></i>Student ID Replacement</li>
+                <li><i class="fas fa-user-check"></i>Certificate of Attendance</li>
+                <li><i class="fas fa-calendar-check"></i>Certificate of Completion</li>
+                <li><i class="fas fa-file-signature"></i>Authentication of Documents</li>
+                <li><i class="fas fa-stamp"></i>Certified True Copy</li>
+            </ul>
+        </div>
+    </div>
+    <div class="col-md-6 mb-4">
+        <div class="glass-card p-4">
+            <h5 class="mb-4 text-warning">
+                <i class="fas fa-briefcase me-2"></i>Special Requests
+            </h5>
+            <ul class="document-list">
+                <li><i class="fas fa-language"></i>English Translation of Documents</li>
+                <li><i class="fas fa-globe"></i>CAV (Certification, Authentication, Verification)</li>
+                <li><i class="fas fa-file-export"></i>Transfer Credentials</li>
+                <li><i class="fas fa-exchange-alt"></i>Cross-Enrollment Permit</li>
+                <li><i class="fas fa-dollar-sign"></i>Waiver / Promissory Note</li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<!-- How It Works -->
+<div class="row mb-5">
+    <div class="col-12 mb-4">
+        <h2 class="section-title">
+            <i class="fas fa-cogs text-success me-2"></i>How It Works
+        </h2>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="process-step">
+            <div class="process-number">1</div>
+            <h4><i class="fas fa-user-plus text-primary me-2"></i>Register</h4>
+            <p class="text-muted mb-0">Create your account using your school ID and email. Verify your identity to access the system securely.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="process-step">
+            <div class="process-number">2</div>
+            <h4><i class="fas fa-file-upload text-info me-2"></i>Request</h4>
+            <p class="text-muted mb-0">Select the document type, fill in required details, and submit your request. Upload any supporting documents if needed.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="process-step">
+            <div class="process-number">3</div>
+            <h4><i class="fas fa-search text-warning me-2"></i>Track</h4>
+            <p class="text-muted mb-0">Monitor your request status from your dashboard. Receive real-time updates via email and system notifications.</p>
+        </div>
+    </div>
+    <div class="col-lg-6 mb-4">
+        <div class="process-step">
+            <div class="process-number">4</div>
+            <h4><i class="fas fa-check-circle text-success me-2"></i>Collect</h4>
+            <p class="text-muted mb-0">Get notified when your document is ready. Visit the registrar's office during business hours to claim your document.</p>
+        </div>
+    </div>
+</div>
+
+<!-- Statistics -->
+<div class="row mb-5">
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="stats-number">24/7</div>
+            <div class="stats-label">System Availability</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="stats-number">3-5</div>
+            <div class="stats-label">Days Processing Time</div>
+        </div>
+    </div>
+    <div class="col-md-4 mb-4">
+        <div class="stats-card">
+            <div class="stats-number">20+</div>
+            <div class="stats-label">Document Types</div>
+        </div>
+    </div>
+</div>
+
+<!-- Info Box -->
+<div class="info-box">
+    <div class="d-flex align-items-center">
+        <i class="fas fa-info-circle"></i>
+        <div>
+            <h4 class="mb-2">Important Information</h4>
+            <p class="mb-0">
+                <strong>Processing Time:</strong> Standard processing takes 3-5 business days for most documents. 
+                Transcripts and authenticated documents may take 5-7 business days. Rush processing (additional fee) 
+                is available for urgent requests. Documents must be claimed at the Registrar's Office during office hours 
+                with a valid ID. Please ensure your payment is complete before processing begins.
+            </p>
+        </div>
+    </div>
+</div>
+
+<!-- Call to Action -->
+{% if not user.is_authenticated %}
+<div class="row mt-5">
+    <div class="col-12">
+        <div class="glass-card p-5 text-center">
+            <h3 class="mb-4">Ready to Get Started?</h3>
+            <p class="lead mb-4">Join your fellow students, alumni, and faculty who have simplified their document requests</p>
+            <a href="{% url 'index' %}" class="btn btn-primary btn-lg">
+                <i class="fas fa-sign-in-alt me-2"></i>Register Now
+            </a>
+        </div>
+    </div>
+</div>
+{% endif %}
+{% endblock %}

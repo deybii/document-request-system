@@ -1,0 +1,893 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block title %}Manage Requests{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-sm: 0 2px 8px rgba(0, 0, 0, 0.08);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.gradient-animated {
+    background-size: 200% 200%;
+    animation: gradientShift 8s ease infinite;
+}
+
+@keyframes gradientShift {
+    0% { background-position: 0% 50%; }
+    50% { background-position: 100% 50%; }
+    100% { background-position: 0% 50%; }
+}
+
+.counter {
+    display: inline-block;
+    transition: all 0.5s ease;
+}
+
+.counter.counting {
+    animation: pulse 0.5s ease;
+}
+
+@keyframes pulse {
+    0%, 100% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+}
+
+.stat-card {
+    position: relative;
+    overflow: hidden;
+    border-radius: 20px;
+    padding: 24px;
+    transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.stat-card::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(45deg, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.stat-card:hover::before {
+    opacity: 1;
+}
+
+.stat-card .icon-wrapper {
+    width: 64px;
+    height: 64px;
+    border-radius: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgba(255, 255, 255, 0.2);
+    backdrop-filter: blur(10px);
+}
+
+.action-card {
+    position: relative;
+    border-radius: 16px;
+    overflow: hidden;
+    transition: all 0.3s ease;
+    cursor: pointer;
+    text-decoration: none;
+}
+
+.action-card::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(135deg, rgba(255,255,255,0.2) 0%, transparent 100%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+}
+
+.action-card:hover::after {
+    opacity: 1;
+}
+
+.action-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: 0 12px 32px rgba(0, 0, 0, 0.2);
+}
+
+.action-card .icon-circle {
+    width: 70px;
+    height: 70px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    margin: 0 auto 16px;
+    background: rgba(255, 255, 255, 0.2);
+    transition: all 0.3s ease;
+}
+
+.action-card:hover .icon-circle {
+    transform: rotate(360deg) scale(1.1);
+}
+
+.modern-table {
+    border-radius: 12px;
+    overflow: hidden;
+}
+
+.modern-table thead {
+    background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.05);
+}
+
+.modern-table tbody tr.selected {
+    background: rgba(102, 126, 234, 0.1);
+    border-left: 4px solid #667eea;
+}
+
+.filter-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 20px;
+    margin-bottom: 24px;
+    border: 1px solid var(--glass-border);
+    box-shadow: var(--shadow-sm);
+}
+
+.quick-search {
+    position: relative;
+}
+
+.quick-search input {
+    border-radius: 24px;
+    padding: 12px 20px 12px 48px;
+    border: 2px solid transparent;
+    transition: all 0.3s ease;
+    background: rgba(255, 255, 255, 0.9);
+}
+
+.quick-search input:focus {
+    border-color: #667eea;
+    box-shadow: 0 0 0 4px rgba(102, 126, 234, 0.1);
+    outline: none;
+}
+
+.quick-search .search-icon {
+    position: absolute;
+    left: 16px;
+    top: 50%;
+    transform: translateY(-50%);
+    color: #667eea;
+}
+
+.badge-glow {
+    position: relative;
+    box-shadow: 0 0 8px currentColor;
+    animation: glow 2s ease-in-out infinite;
+}
+
+@keyframes glow {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.8; }
+}
+
+.custom-tooltip {
+    position: relative;
+}
+
+.custom-tooltip::before {
+    content: attr(data-tooltip);
+    position: absolute;
+    bottom: 100%;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(0, 0, 0, 0.9);
+    color: white;
+    padding: 8px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    white-space: nowrap;
+    opacity: 0;
+    pointer-events: none;
+    transition: opacity 0.3s ease;
+    margin-bottom: 8px;
+    z-index: 1000;
+}
+
+.custom-tooltip:hover::before {
+    opacity: 1;
+}
+
+.action-btn {
+    transition: all 0.3s ease;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+}
+
+/* Bulk Actions Toolbar */
+.bulk-actions-toolbar {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 16px 20px;
+    margin-bottom: 20px;
+    border: 2px solid #667eea;
+    box-shadow: var(--shadow-md);
+    display: none;
+    animation: slideDown 0.3s ease;
+}
+
+.bulk-actions-toolbar.active {
+    display: flex;
+}
+
+@keyframes slideDown {
+    from {
+        opacity: 0;
+        transform: translateY(-20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.selection-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+}
+
+.selection-badge {
+    background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    color: white;
+    padding: 8px 16px;
+    border-radius: 20px;
+    font-weight: 600;
+    font-size: 0.95rem;
+    box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+}
+
+.bulk-actions {
+    display: flex;
+    gap: 8px;
+    flex-wrap: wrap;
+}
+
+.bulk-action-btn {
+    padding: 8px 16px;
+    border-radius: 8px;
+    border: none;
+    font-weight: 600;
+    font-size: 0.9rem;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.bulk-action-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.2);
+}
+
+.bulk-action-btn i {
+    font-size: 0.85rem;
+}
+
+/* Custom Checkbox Styling */
+.custom-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+.select-all-checkbox {
+    width: 20px;
+    height: 20px;
+    cursor: pointer;
+    accent-color: #667eea;
+}
+
+@media (max-width: 768px) {
+    .stat-card {
+        margin-bottom: 16px;
+    }
+    
+    .bulk-actions-toolbar {
+        flex-direction: column;
+        gap: 12px;
+    }
+    
+    .bulk-actions {
+        width: 100%;
+    }
+    
+    .bulk-action-btn {
+        flex: 1;
+        justify-content: center;
+    }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 pb-5">
+    <!-- Header Section -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div class="mb-3 mb-md-0">
+            <h2 class="mb-2">
+                <i class="fas fa-file-alt text-primary"></i> 
+                <span class="ms-2">Manage Document Requests</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                View, filter, and process document requests
+            </p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+            <button class="btn btn-primary" onclick="exportRequests()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="?status=pending" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100">
+                    <div class="icon-circle bg-warning bg-opacity-10">
+                        <i class="fas fa-clock fa-2x text-warning"></i>
+                    </div>
+                    <h3 class="display-5 text-warning mb-2 fw-bold counter" data-target="{{ pending_count }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Pending</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>Needs review
+                    </small>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="?status=processing" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100">
+                    <div class="icon-circle bg-info bg-opacity-10">
+                        <i class="fas fa-spinner fa-2x text-info"></i>
+                    </div>
+                    <h3 class="display-5 text-info mb-2 fw-bold counter" data-target="{{ processing_count }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Processing</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>In progress
+                    </small>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="?status=ready" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100">
+                    <div class="icon-circle bg-primary bg-opacity-10">
+                        <i class="fas fa-box fa-2x text-primary"></i>
+                    </div>
+                    <h3 class="display-5 text-primary mb-2 fw-bold counter" data-target="{{ ready_count }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Ready</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>For pickup
+                    </small>
+                </div>
+            </a>
+        </div>
+
+        <div class="col-md-3 col-sm-6 mb-3">
+            <a href="?status=completed" class="text-decoration-none">
+                <div class="action-card glass-card text-center p-4 h-100">
+                    <div class="icon-circle bg-success bg-opacity-10">
+                        <i class="fas fa-check-circle fa-2x text-success"></i>
+                    </div>
+                    <h3 class="display-5 text-success mb-2 fw-bold counter" data-target="{{ completed_count }}">0</h3>
+                    <p class="text-dark mb-1 fw-semibold">Completed</p>
+                    <small class="text-muted">
+                        <i class="fas fa-arrow-right me-1"></i>Delivered
+                    </small>
+                </div>
+            </a>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <form method="get" class="row g-3 align-items-end" id="filterForm">
+            <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-tasks me-1"></i>Status
+                </label>
+                <select name="status" class="form-select">
+                    <option value="">All Statuses</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+                    <option value="ready" {% if status_filter == 'ready' %}selected{% endif %}>Ready</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-2">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-credit-card me-1"></i>Payment
+                </label>
+                <select name="payment_status" class="form-select">
+                    <option value="">All Payments</option>
+                    <option value="paid" {% if payment_filter == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="unpaid" {% if payment_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                    <option value="failed" {% if payment_filter == 'failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-search me-1"></i>Search
+                </label>
+                <div class="quick-search">
+                    <i class="fas fa-search search-icon"></i>
+                    <input type="text" name="search" class="form-control" placeholder="Order ID or student name..." value="{{ search_query }}">
+                </div>
+            </div>
+            <div class="col-md-2">
+                <button class="btn btn-primary w-100 action-btn">
+                    <i class="fas fa-filter me-2"></i>Apply Filter
+                </button>
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'admin_requests' %}" class="btn btn-secondary w-100 action-btn">
+                    <i class="fas fa-sync me-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Bulk Actions Toolbar -->
+    <div class="bulk-actions-toolbar" id="bulkActionsToolbar">
+        <div class="selection-info">
+            <span class="selection-badge">
+                <i class="fas fa-check-square me-2"></i>
+                <span id="selectedCount">0</span> selected
+            </span>
+            <button type="button" class="btn btn-sm btn-outline-secondary" onclick="clearSelection()">
+                <i class="fas fa-times me-1"></i>Clear
+            </button>
+        </div>
+        <div class="bulk-actions">
+            <form method="post" id="bulkActionForm" style="display: contents;">
+                {% csrf_token %}
+                <input type="hidden" name="selected_ids" id="selectedIdsInput">
+                
+                <button type="button" name="bulk_action" value="mark_processing" class="bulk-action-btn btn btn-info text-white" onclick="submitBulkAction('mark_processing')">
+                    <i class="fas fa-spinner"></i>
+                    Mark Processing
+                </button>
+                
+                <button type="button" name="bulk_action" value="mark_ready" class="bulk-action-btn btn btn-primary text-white" onclick="submitBulkAction('mark_ready')">
+                    <i class="fas fa-box"></i>
+                    Mark Ready
+                </button>
+                
+                <button type="button" name="bulk_action" value="mark_completed" class="bulk-action-btn btn btn-success text-white" onclick="submitBulkAction('mark_completed')">
+                    <i class="fas fa-check-circle"></i>
+                    Mark Completed
+                </button>
+                
+                <button type="button" name="bulk_action" value="confirm_payment" class="bulk-action-btn btn btn-secondary text-white" onclick="submitBulkAction('confirm_payment')">
+                    <i class="fas fa-dollar-sign"></i>
+                    Confirm Payment
+                </button>
+                
+                <button type="button" name="bulk_action" value="export_selected" class="bulk-action-btn btn btn-dark text-white" onclick="submitBulkAction('export_selected')">
+                    <i class="fas fa-download"></i>
+                    Export Selected
+                </button>
+                
+                <button type="button" name="bulk_action" value="reject" class="bulk-action-btn btn btn-danger text-white" onclick="confirmBulkAction('reject', 'Are you sure you want to reject the selected requests?')">
+                    <i class="fas fa-times-circle"></i>
+                    Reject
+                </button>
+            </form>
+        </div>
+    </div>
+
+    <!-- Requests Table -->
+    <div class="glass-card shadow-lg">
+        <div class="card-header bg-transparent border-0 pt-4 pb-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-list text-primary me-2"></i>Document Requests
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table modern-table mb-0">
+                    <thead>
+                        <tr>
+                            <th class="px-4 py-3" style="width: 50px;">
+                                <input type="checkbox" class="select-all-checkbox" id="selectAll" onchange="toggleSelectAll(this)">
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-barcode me-2"></i>Order ID
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-user me-2"></i>Student
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-file me-2"></i>Document
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-tasks me-2"></i>Status
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-credit-card me-2"></i>Payment
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-calendar me-2"></i>Date
+                            </th>
+                            <th class="py-3 text-center">
+                                <i class="fas fa-cog me-2"></i>Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for req in page_obj %}
+                        <tr id="row-{{ req.id }}">
+                            <td class="px-4 py-3">
+                                <input type="checkbox" class="custom-checkbox request-checkbox" value="{{ req.id }}" onchange="updateSelection()">
+                            </td>
+                            <td class="py-3">
+                                <a href="{% url 'admin_request_detail' req.order_id %}" 
+                                   class="text-primary font-monospace fw-bold text-decoration-none custom-tooltip" 
+                                   data-tooltip="View details">
+                                    {{ req.order_id }}
+                                </a>
+                            </td>
+                            <td class="py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" 
+                                         style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <div>
+                                        <strong class="d-block">{{ req.user.get_full_name }}</strong>
+                                        <small class="text-muted">
+                                            <i class="fas fa-id-card me-1"></i>{{ req.user.username }}
+                                        </small>
+                                    </div>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge bg-secondary bg-opacity-10 text-dark">
+                                    <i class="fas fa-file-alt me-1"></i>{{ req.get_document_type_display }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge badge-glow {% if req.status == 'pending' %}bg-warning text-dark{% elif req.status == 'processing' %}bg-info{% elif req.status == 'ready' %}bg-primary{% elif req.status == 'completed' %}bg-success{% else %}bg-danger{% endif %}">
+                                    <i class="fas {% if req.status == 'pending' %}fa-clock{% elif req.status == 'processing' %}fa-spinner{% elif req.status == 'ready' %}fa-box{% elif req.status == 'completed' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <span class="badge {% if req.payment_status == 'paid' %}bg-success{% elif req.payment_status == 'failed' %}bg-danger{% else %}bg-warning text-dark{% endif %}">
+                                    {% if req.payment_method == 'online' %}
+                                        <i class="fas fa-credit-card me-1"></i>
+                                    {% else %}
+                                        <i class="fas fa-money-bill me-1"></i>
+                                    {% endif %}
+                                    {{ req.get_payment_status_display }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>{{ req.created_at|date:"M d, Y" }}
+                                    <br>
+                                    <i class="far fa-clock me-1"></i>{{ req.created_at|date:"h:i A" }}
+                                </small>
+                            </td>
+                            <td class="py-3 text-center">
+                                <a href="{% url 'admin_request_detail' req.order_id %}" 
+                                   class="btn btn-sm btn-outline-primary action-btn custom-tooltip" 
+                                   data-tooltip="View & manage request">
+                                    <i class="fas fa-eye me-1"></i>View
+                                </a>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-3x mb-3 d-block"></i>
+                                <p class="mb-0">No requests found matching your criteria</p>
+                                <small class="text-muted">Try adjusting your filters</small>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav aria-label="Page navigation">
+            <ul class="pagination pagination-lg">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment_status={{ payment_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">
+                        Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}
+                    </span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if status_filter %}&status={{ status_filter }}{% endif %}{% if payment_filter %}&payment_status={{ payment_filter }}{% endif %}{% if search_query %}&search={{ search_query }}{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}
+
+{% block extra_js %}
+<script>
+let selectedRequests = new Set();
+
+// Counter animation
+function animateCounter(element) {
+    const target = parseInt(element.getAttribute('data-target'));
+    const duration = 2000;
+    const step = target / (duration / 16);
+    let current = 0;
+    
+    element.classList.add('counting');
+    
+    const timer = setInterval(() => {
+        current += step;
+        if (current >= target) {
+            element.textContent = target;
+            clearInterval(timer);
+            element.classList.remove('counting');
+        } else {
+            element.textContent = Math.floor(current);
+        }
+    }, 16);
+}
+
+// Initialize animations
+document.addEventListener('DOMContentLoaded', function() {
+    setTimeout(() => {
+        document.querySelectorAll('.counter').forEach(counter => {
+            animateCounter(counter);
+        });
+    }, 300);
+    
+    // Restore checkbox states if coming back from detail page
+    const savedSelections = sessionStorage.getItem('selectedRequests');
+    if (savedSelections) {
+        selectedRequests = new Set(JSON.parse(savedSelections));
+        updateCheckboxes();
+        updateSelection();
+    }
+});
+
+// Toggle select all
+function toggleSelectAll(checkbox) {
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = checkbox.checked;
+        const rowId = cb.value;
+        if (checkbox.checked) {
+            selectedRequests.add(rowId);
+            document.getElementById('row-' + rowId)?.classList.add('selected');
+        } else {
+            selectedRequests.delete(rowId);
+            document.getElementById('row-' + rowId)?.classList.remove('selected');
+        }
+    });
+    updateSelection();
+}
+
+// Update selection status
+function updateSelection() {
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    const checkedCheckboxes = document.querySelectorAll('.request-checkbox:checked');
+    
+    // Update selected set
+    selectedRequests.clear();
+    checkedCheckboxes.forEach(cb => {
+        selectedRequests.add(cb.value);
+        document.getElementById('row-' + cb.value)?.classList.add('selected');
+    });
+    
+    // Remove selected class from unchecked rows
+    checkboxes.forEach(cb => {
+        if (!cb.checked) {
+            document.getElementById('row-' + cb.value)?.classList.remove('selected');
+        }
+    });
+    
+    // Update select all checkbox
+    const selectAllCheckbox = document.getElementById('selectAll');
+    selectAllCheckbox.checked = checkboxes.length > 0 && checkedCheckboxes.length === checkboxes.length;
+    selectAllCheckbox.indeterminate = checkedCheckboxes.length > 0 && checkedCheckboxes.length < checkboxes.length;
+    
+    // Update toolbar
+    const toolbar = document.getElementById('bulkActionsToolbar');
+    const selectedCount = document.getElementById('selectedCount');
+    
+    if (selectedRequests.size > 0) {
+        toolbar.classList.add('active');
+        selectedCount.textContent = selectedRequests.size;
+    } else {
+        toolbar.classList.remove('active');
+    }
+    
+    // Save to session storage
+    sessionStorage.setItem('selectedRequests', JSON.stringify([...selectedRequests]));
+}
+
+// Update checkboxes from saved state
+function updateCheckboxes() {
+    selectedRequests.forEach(id => {
+        const checkbox = document.querySelector(`.request-checkbox[value="${id}"]`);
+        if (checkbox) {
+            checkbox.checked = true;
+            document.getElementById('row-' + id)?.classList.add('selected');
+        }
+    });
+}
+
+// Clear selection
+function clearSelection() {
+    const checkboxes = document.querySelectorAll('.request-checkbox');
+    checkboxes.forEach(cb => {
+        cb.checked = false;
+        document.getElementById('row-' + cb.value)?.classList.remove('selected');
+    });
+    document.getElementById('selectAll').checked = false;
+    selectedRequests.clear();
+    updateSelection();
+    sessionStorage.removeItem('selectedRequests');
+}
+
+// Submit bulk action
+function submitBulkAction(action) {
+    if (selectedRequests.size === 0) {
+        alert('Please select at least one request.');
+        return;
+    }
+    
+    const form = document.getElementById('bulkActionForm');
+    const input = document.getElementById('selectedIdsInput');
+    input.value = [...selectedRequests].join(',');
+    
+    // Create a hidden input for the action
+    const actionInput = document.createElement('input');
+    actionInput.type = 'hidden';
+    actionInput.name = 'bulk_action';
+    actionInput.value = action;
+    form.appendChild(actionInput);
+    
+    // Show loading state
+    const buttons = document.querySelectorAll('.bulk-action-btn');
+    buttons.forEach(btn => btn.disabled = true);
+    
+    form.submit();
+}
+
+// Confirm destructive bulk action
+function confirmBulkAction(action, message) {
+    if (selectedRequests.size === 0) {
+        alert('Please select at least one request.');
+        return;
+    }
+    
+    if (confirm(message)) {
+        submitBulkAction(action);
+    }
+}
+
+// Export functionality
+function exportRequests() {
+    if (selectedRequests.size > 0) {
+        if (confirm('Export selected requests (' + selectedRequests.size + ') or all requests?')) {
+            submitBulkAction('export_selected');
+        } else {
+            alert('Export all functionality:\n• CSV Export\n• PDF Report\n• Excel Spreadsheet\n\nWould be implemented here.');
+        }
+    } else {
+        alert('Export functionality:\n• CSV Export\n• PDF Report\n• Excel Spreadsheet\n\nWould be implemented here.');
+    }
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', function(e) {
+    // Ctrl/Cmd + K for search
+    if ((e.ctrlKey || e.metaKey) && e.key === 'k') {
+        e.preventDefault();
+        document.querySelector('.quick-search input')?.focus();
+    }
+    
+    // Ctrl/Cmd + A for select all (when not in input field)
+    if ((e.ctrlKey || e.metaKey) && e.key === 'a' && !['INPUT', 'TEXTAREA'].includes(e.target.tagName)) {
+        e.preventDefault();
+        const selectAllCheckbox = document.getElementById('selectAll');
+        selectAllCheckbox.checked = !selectAllCheckbox.checked;
+        toggleSelectAll(selectAllCheckbox);
+    }
+    
+    // Escape to clear selection
+    if (e.key === 'Escape') {
+        clearSelection();
+    }
+});
+
+// Clear selection when navigating to detail page
+document.querySelectorAll('a[href*="admin_request_detail"]').forEach(link => {
+    link.addEventListener('click', function() {
+        // Keep selection in session storage for when user comes back
+    });
+});
+</script>
+{% endblock %}
