@@ -12,9 +12,13 @@ urlpatterns = [
     path('request/detail/<str:order_id>/', views.request_detail, name='request_detail'),
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),
+    path('profile/', views.user_profile, name='user_profile'),
+    path('profile/edit/', views.edit_profile, name='edit_profile'),
     path('dashboard/', views.admin_dashboard, name='admin_dashboard'),
     path('dashboard/requests/', views.admin_requests, name='admin_requests'),
     path('dashboard/users/', views.admin_users, name='admin_users'),
     path('dashboard/request/<str:order_id>/', views.admin_request_detail, name='admin_request_detail'),
     path('dashboard/user/verify/<int:profile_id>/', views.admin_verify_user, name='admin_verify_user'),
+    path('admin-edit-user/<int:profile_id>/', views.admin_edit_user, name='admin_edit_user'),
+    path('admin-delete-user/<int:profile_id>/', views.admin_delete_user, name='admin_delete_user'),
 ]

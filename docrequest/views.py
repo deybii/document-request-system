@@ -738,3 +738,186 @@ def admin_verify_user(request, profile_id):
     if query_params:
         return redirect(f"{reverse('admin_users')}?{query_params.urlencode()}")
     return redirect('admin_users')
+
+@staff_member_required
+def admin_edit_user(request, profile_id):
+    """Edit user profile and account details"""
+    profile = get_object_or_404(UserProfile, id=profile_id)
+    user = profile.user
+    
+    if request.method == 'POST':
+        # Update User model
+        user.first_name = request.POST.get('first_name', '').strip()
+        user.last_name = request.POST.get('last_name', '').strip()
+        user.email = request.POST.get('email', '').strip()
+        
+        # Update UserProfile model
+        profile.role = request.POST.get('role', profile.role)
+        profile.department = request.POST.get('department', '').strip()
+        profile.course = request.POST.get('course', '').strip()
+        profile.year_level = request.POST.get('year_level', '').strip()
+        
+        graduation_year = request.POST.get('graduation_year', '').strip()
+        if graduation_year:
+            try:
+                profile.graduation_year = int(graduation_year)
+            except ValueError:
+                profile.graduation_year = None
+        else:
+            profile.graduation_year = None
+        
+        profile.is_verified = request.POST.get('is_verified') == 'on'
+        
+        try:
+            user.save()
+            profile.save()
+            messages.success(
+                request,
+                f'✅ Successfully updated profile for {user.get_full_name()} ({profile.school_id})'
+            )
+            return redirect('admin_users')
+        except Exception as e:
+            messages.error(request, f'❌ Error updating user: {str(e)}')
+    
+    context = {'profile': profile}
+    return render(request, 'admin_edit_user.html', context)
+
+
+@staff_member_required
+def admin_delete_user(request, profile_id):
+    """Delete user and their profile"""
+    profile = get_object_or_404(UserProfile, id=profile_id)
+    user = profile.user
+    
+    if request.method == 'POST':
+        user_name = user.get_full_name()
+        school_id = profile.school_id
+        
+        # Check if user has any active requests
+        active_requests = DocumentRequest.objects.filter(
+            user=user,
+            status__in=['pending', 'processing', 'ready']
+        ).count()
+        
+        if active_requests > 0:
+            messages.warning(
+                request,
+                f'⚠️ Cannot delete user {user_name} ({school_id}). '
+                f'They have {active_requests} active request(s). '
+                f'Please complete or reject their requests first.'
+            )
+            return redirect('admin_users')
+        
+        try:
+            # Delete user (profile will be deleted via CASCADE)
+            user.delete()
+            messages.success(
+                request,
+                f'✅ Successfully deleted user: {user_name} ({school_id})'
+            )
+        except Exception as e:
+            messages.error(request, f'❌ Error deleting user: {str(e)}')
+    
+    return redirect('admin_users')
+
+@login_required
+def user_profile(request):
+    """View user's own profile"""
+    if not hasattr(request.user, 'profile'):
+        messages.error(request, '❌ Profile not found. Please contact administrator.')
+        return redirect('home')
+    
+    profile = request.user.profile
+    
+    # Get user statistics
+    total_requests = DocumentRequest.objects.filter(user=request.user).count()
+    completed_requests = DocumentRequest.objects.filter(user=request.user, status='completed').count()
+    active_request = DocumentRequest.get_user_active_request(request.user)
+    
+    context = {
+        'profile': profile,
+        'total_requests': total_requests,
+        'completed_requests': completed_requests,
+        'active_request': active_request,
+    }
+    return render(request, 'user_profile.html', context)
+
+
+@login_required
+def edit_profile(request):
+    """Edit user's own profile"""
+    if not hasattr(request.user, 'profile'):
+        messages.error(request, '❌ Profile not found. Please contact administrator.')
+        return redirect('home')
+    
+    profile = request.user.profile
+    user = request.user
+    
+    if request.method == 'POST':
+        # Update User model (limited fields)
+        user.first_name = request.POST.get('first_name', '').strip()
+        user.last_name = request.POST.get('last_name', '').strip()
+        
+        # Email validation
+        new_email = request.POST.get('email', '').strip()
+        if new_email != user.email:
+            if User.objects.filter(email=new_email).exclude(id=user.id).exists():
+                messages.error(request, '❌ This email is already in use.')
+                return redirect('edit_profile')
+            user.email = new_email
+        
+        # Update UserProfile model (limited fields)
+        profile.department = request.POST.get('department', '').strip()
+        profile.course = request.POST.get('course', '').strip()
+        profile.year_level = request.POST.get('year_level', '').strip()
+        
+        graduation_year = request.POST.get('graduation_year', '').strip()
+        if graduation_year:
+            try:
+                profile.graduation_year = int(graduation_year)
+            except ValueError:
+                profile.graduation_year = None
+        else:
+            profile.graduation_year = None
+        
+        # Password change (optional)
+        current_password = request.POST.get('current_password', '').strip()
+        new_password = request.POST.get('new_password', '').strip()
+        confirm_password = request.POST.get('confirm_password', '').strip()
+        
+        if new_password:
+            if not current_password:
+                messages.error(request, '❌ Please enter your current password.')
+                return redirect('edit_profile')
+            
+            if not user.check_password(current_password):
+                messages.error(request, '❌ Current password is incorrect.')
+                return redirect('edit_profile')
+            
+            if new_password != confirm_password:
+                messages.error(request, '❌ New passwords do not match.')
+                return redirect('edit_profile')
+            
+            if len(new_password) < 8:
+                messages.error(request, '❌ Password must be at least 8 characters long.')
+                return redirect('edit_profile')
+            
+            user.set_password(new_password)
+            messages.success(request, '✅ Password updated successfully! Please log in again.')
+        
+        try:
+            user.save()
+            profile.save()
+            
+            if new_password:
+                # Re-login after password change
+                from django.contrib.auth import update_session_auth_hash
+                update_session_auth_hash(request, user)
+            
+            messages.success(request, '✅ Profile updated successfully!')
+            return redirect('user_profile')
+        except Exception as e:
+            messages.error(request, f'❌ Error updating profile: {str(e)}')
+    
+    context = {'profile': profile}
+    return render(request, 'edit_profile.html', context)
