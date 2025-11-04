@@ -250,6 +250,8 @@ def my_requests(request):
     ready_count = DocumentRequest.objects.filter(user=request.user, status='ready').count()
     completed_count = DocumentRequest.objects.filter(user=request.user, status='completed').count()
     
+    active_request = DocumentRequest.get_user_active_request(request.user)
+    
     context = {
         'requests': requests,
         'status_filter': status_filter,
@@ -263,8 +265,9 @@ def my_requests(request):
         'processing_count': processing_count,
         'ready_count': ready_count,
         'completed_count': completed_count,
+        'active_request': active_request,  # ✅ Pass to template
     }
-    return render(request, 'request.html', context)
+    return render(request, 'my_requests.html', context)
 
 
 @login_required
@@ -921,3 +924,35 @@ def edit_profile(request):
     
     context = {'profile': profile}
     return render(request, 'edit_profile.html', context)
+
+@login_required
+def cancel_request(request, order_id):
+    """Allow users to cancel their own pending/processing requests"""
+    doc_request = get_object_or_404(DocumentRequest, order_id=order_id, user=request.user)
+    
+    # Only allow cancellation if request is pending or processing
+    if doc_request.status not in ['pending', 'processing']:
+        messages.warning(
+            request, 
+            f'⚠️ Cannot cancel request {order_id}. '
+            f'Status: {doc_request.get_status_display()}. '
+            f'Only pending or processing requests can be cancelled.'
+        )
+        return redirect('request_detail', order_id=order_id)
+    
+    if request.method == 'POST':
+        # Update request status to rejected/cancelled
+        doc_request.status = 'rejected'
+        doc_request.notes = f"{doc_request.notes}\n\n[CANCELLED BY USER on {timezone.now().strftime('%Y-%m-%d %H:%M')}]" if doc_request.notes else f"[CANCELLED BY USER on {timezone.now().strftime('%Y-%m-%d %H:%M')}]"
+        doc_request.save()
+        
+        messages.success(
+            request,
+            f'✅ Request {order_id} has been cancelled successfully. '
+            f'You can now submit a new request.',
+            extra_tags='safe'
+        )
+        return redirect('my_requests')
+    
+    # If GET request, redirect to detail page
+    return redirect('request_detail', order_id=order_id)

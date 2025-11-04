@@ -113,9 +113,9 @@
                         <i class="fas fa-info-circle me-2"></i>
                         You cannot submit a new request until your current one is <strong>completed</strong> or <strong>rejected</strong>.
                     </p>
-                    <a href="{% url 'request' %}" class="btn btn-light">
-                        <i class="fas fa-list me-2"></i>View All My Requests
-                    </a>
+                        <a href="{% url 'my_requests' %}" class="btn btn-light">
+                            <i class="fas fa-list me-2"></i>View All My Requests
+                        </a>
                 </div>
             </div>
         </div>
@@ -324,7 +324,7 @@
 </div>
 
 <!-- ✅ MY REQUESTS SECTION -->
-<div class="row mt-4">
+<div class="row mt-4" id="request-history">
     <div class="col-md-12">
         <div class="card shadow">
             <div class="card-header bg-secondary text-white d-flex justify-content-between align-items-center">
@@ -353,8 +353,11 @@
                             </tr>
                         </thead>
                         <tbody>
-                            {% for req in my_requests %}
-                            <tr {% if active_request and req.id == active_request.id %}class="table-warning"{% endif %}>
+                                {% for req in my_requests %}
+                                    {% url 'request_detail' req.order_id as detail_url %}
+                                    <tr {% if active_request and req.id == active_request.id %}class="table-warning"{% endif %} 
+                                        onclick="window.location.href='{{ detail_url }}'" 
+                                        style="cursor: pointer;">
                                 <td class="px-4">
                                     <strong class="text-primary font-monospace">
                                         {{ req.order_id }}

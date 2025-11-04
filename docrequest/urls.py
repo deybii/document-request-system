@@ -10,6 +10,7 @@ urlpatterns = [
     path('request/success/<str:order_id>/', views.request_success, name='request_success'),
     path('my-requests/', views.my_requests, name='my_requests'),
     path('request/detail/<str:order_id>/', views.request_detail, name='request_detail'),
+    path('request/cancel/<str:order_id>/', views.cancel_request, name='cancel_request'),
     path('contact/', views.contact, name='contact'),
     path('about/', views.about, name='about'),
     path('profile/', views.user_profile, name='user_profile'),

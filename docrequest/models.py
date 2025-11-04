@@ -332,6 +332,14 @@ class DocumentRequest(models.Model):
             user=user,
             status__in=active_statuses
         ).first()
+    
+    def can_be_cancelled(self):
+        """Check if request can be cancelled by user"""
+        return self.status in ['pending', 'processing']
+    
+    def is_cancelled(self):
+        """Check if request was cancelled"""
+        return self.status == 'rejected' and '[CANCELLED BY USER' in (self.notes or '')
 
 
 class ContactMessage(models.Model):

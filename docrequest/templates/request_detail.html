@@ -9,6 +9,7 @@
     --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
     --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
     --info-gradient: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
     --glass-bg: rgba(255, 255, 255, 0.9);
     --glass-border: rgba(255, 255, 255, 0.18);
     --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
@@ -123,6 +124,11 @@
     animation: pulse-ring 2s infinite;
 }
 
+.progress-step.cancelled::before {
+    background: #eb3349;
+    border-color: #eb3349;
+}
+
 @keyframes pulse-ring {
     0%, 100% { box-shadow: 0 0 12px rgba(102, 126, 234, 0.6); }
     50% { box-shadow: 0 0 20px rgba(102, 126, 234, 0.8); }
@@ -215,7 +221,7 @@
                         <div class="info-label">
                             <i class="fas fa-sticky-note me-2"></i>Additional Notes
                         </div>
-                        <div class="info-value">{{ doc_request.notes }}</div>
+                        <div class="info-value" style="white-space: pre-line;">{{ doc_request.notes }}</div>
                     </div>
                     {% endif %}
                 </div>
@@ -346,6 +352,15 @@
                             </small>
                         </div>
                         
+                        {% if doc_request.status == 'rejected' %}
+                        <!-- Cancelled/Rejected -->
+                        <div class="progress-step cancelled active">
+                            <h5>
+                                <i class="fas fa-times-circle text-danger me-2"></i>Cancelled
+                            </h5>
+                            <p class="text-danger">Request was cancelled</p>
+                        </div>
+                        {% else %}
                         <!-- Step 2: Processing -->
                         <div class="progress-step {% if doc_request.status == 'processing' %}active{% elif doc_request.status in 'ready,completed' %}completed{% endif %}">
                             <h5>
@@ -381,6 +396,7 @@
                                 </small>
                             {% endif %}
                         </div>
+                        {% endif %}
                     </div>
                 </div>
             </div>
@@ -393,19 +409,27 @@
                     </h5>
                 </div>
                 <div class="card-body">
-                    <a href="{% url 'home' %}" class="btn btn-outline-primary w-100 mb-2">
-                        <i class="fas fa-home me-2"></i>Back to Dashboard
-                    </a>
-                    
-                    {% if doc_request.payment_status == 'unpaid' and doc_request.payment_method == 'online' %}
-                    <a href="{% url 'simulated_payment' doc_request.order_id %}" class="btn btn-success w-100 mb-2">
-                        <i class="fas fa-credit-card me-2"></i>Complete Payment
-                    </a>
-                    {% endif %}
-                    
-                    <a href="{% url 'contact' %}" class="btn btn-outline-secondary w-100">
-                        <i class="fas fa-question-circle me-2"></i>Need Help?
-                    </a>
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'home' %}" class="btn btn-outline-primary">
+                            <i class="fas fa-home me-2"></i>Back to Dashboard
+                        </a>
+                        
+                        {% if doc_request.payment_status == 'unpaid' and doc_request.payment_method == 'online' and doc_request.status not in 'rejected,completed' %}
+                        <a href="{% url 'simulated_payment' doc_request.order_id %}" class="btn btn-success">
+                            <i class="fas fa-credit-card me-2"></i>Complete Payment
+                        </a>
+                        {% endif %}
+                        
+                        {% if doc_request.status in 'pending,processing' %}
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#cancelModal">
+                            <i class="fas fa-times-circle me-2"></i>Cancel Request
+                        </button>
+                        {% endif %}
+                        
+                        <a href="{% url 'contact' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-question-circle me-2"></i>Need Help?
+                        </a>
+                    </div>
                 </div>
             </div>
 
@@ -419,7 +443,48 @@
                     <li>Bring a valid ID when claiming</li>
                     <li>Processing time: 3-5 business days</li>
                     <li>Office hours: Mon-Fri, 8:00 AM - 5:00 PM</li>
+                    {% if doc_request.status in 'pending,processing' %}
+                    <li class="text-danger">You can cancel this request anytime before it's ready</li>
+                    {% endif %}
                 </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ✅ Cancel Request Confirmation Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px; border: none;">
+            <div class="modal-header" style="background: linear-gradient(135deg, #eb3349 0%, #f45c43 100%); color: white; border-radius: 16px 16px 0 0;">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Cancel Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                <h5 class="mb-3">Are you sure you want to cancel this request?</h5>
+                <div class="alert alert-warning">
+                    <strong>Order ID:</strong> {{ doc_request.order_id }}<br>
+                    <strong>Document:</strong> {{ doc_request.get_document_type_display }}<br>
+                    <strong>Status:</strong> {{ doc_request.get_status_display }}
+                </div>
+                <p class="text-muted small mb-0">
+                    <i class="fas fa-info-circle me-1"></i>
+                    After cancellation, you'll be able to submit a new request.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-2"></i>No, Keep Request
+                </button>
+                <form action="{% url 'cancel_request' doc_request.order_id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle me-2"></i>Yes, Cancel Request
+                    </button>
+                </form>
             </div>
         </div>
     </div>

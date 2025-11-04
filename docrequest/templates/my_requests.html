@@ -1,0 +1,374 @@
+{% extends 'base.html' %}
+
+{% block title %}My Requests - Document Request System{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.stat-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+    cursor: pointer;
+}
+
+.stat-card:hover {
+    transform: translateY(-8px) scale(1.02);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.08);
+    transform: scale(1.005);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+}
+
+.modern-table tbody tr.active-row {
+    background: linear-gradient(90deg, rgba(242, 153, 74, 0.15) 0%, transparent 100%);
+    border-left: 4px solid #f2994a;
+}
+
+.filter-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--glass-border);
+}
+
+.badge-glow {
+    box-shadow: 0 0 8px currentColor;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 pb-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div class="mb-3 mb-md-0">
+            <h2 class="mb-2">
+                <i class="fas fa-list text-primary"></i>
+                <span class="ms-2">My Document Requests</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                View and track all your document requests
+            </p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'home' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back to Home
+            </a>
+            {% if not active_request %}
+            <a href="{% url 'request' %}" class="btn btn-primary">
+                <i class="fas fa-plus-circle me-2"></i>New Request
+            </a>
+            {% else %}
+            <button class="btn btn-secondary" disabled title="You have an active request">
+                <i class="fas fa-lock me-2"></i>New Request
+            </button>
+            {% endif %}
+        </div>
+    </div>
+
+    <!-- Statistics Cards -->
+    <div class="row mb-4">
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card glass-card" onclick="clearFilters()">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-file-alt"></i>
+                </div>
+                <h3 class="text-primary mb-1">{{ total_count }}</h3>
+                <p class="text-muted mb-0">Total Requests</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card glass-card" onclick="filterByStatus('pending')">
+                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
+                    <i class="fas fa-clock"></i>
+                </div>
+                <h3 class="text-warning mb-1">{{ pending_count }}</h3>
+                <p class="text-muted mb-0">Pending</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card glass-card" onclick="filterByStatus('ready')">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-box"></i>
+                </div>
+                <h3 class="text-primary mb-1">{{ ready_count }}</h3>
+                <p class="text-muted mb-0">Ready for Pickup</p>
+            </div>
+        </div>
+        
+        <div class="col-md-3 col-sm-6 mb-3">
+            <div class="stat-card glass-card" onclick="filterByStatus('completed')">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <h3 class="text-success mb-1">{{ completed_count }}</h3>
+                <p class="text-muted mb-0">Completed</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <form method="get" class="row g-3 align-items-end" id="filterForm">
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-tasks me-1"></i>Status
+                </label>
+                <select name="status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Statuses</option>
+                    <option value="pending" {% if status_filter == 'pending' %}selected{% endif %}>Pending</option>
+                    <option value="processing" {% if status_filter == 'processing' %}selected{% endif %}>Processing</option>
+                    <option value="ready" {% if status_filter == 'ready' %}selected{% endif %}>Ready</option>
+                    <option value="completed" {% if status_filter == 'completed' %}selected{% endif %}>Completed</option>
+                    <option value="rejected" {% if status_filter == 'rejected' %}selected{% endif %}>Rejected</option>
+                </select>
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-credit-card me-1"></i>Payment
+                </label>
+                <select name="payment_status" class="form-select" onchange="this.form.submit()">
+                    <option value="">All Payments</option>
+                    <option value="paid" {% if payment_filter == 'paid' %}selected{% endif %}>Paid</option>
+                    <option value="unpaid" {% if payment_filter == 'unpaid' %}selected{% endif %}>Unpaid</option>
+                    <option value="failed" {% if payment_filter == 'failed' %}selected{% endif %}>Failed</option>
+                </select>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-search me-1"></i>Search
+                </label>
+                <input type="text" name="search" class="form-control" placeholder="Search by Order ID or document type..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-2">
+                <a href="{% url 'my_requests' %}" class="btn btn-secondary w-100">
+                    <i class="fas fa-sync me-2"></i>Reset
+                </a>
+            </div>
+        </form>
+    </div>
+
+    <!-- Requests Table -->
+    <div class="glass-card shadow-lg">
+        <div class="card-header bg-transparent border-0 pt-4 pb-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-history text-primary me-2"></i>Request History
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table modern-table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">
+                                <i class="fas fa-barcode me-2"></i>Order ID
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-file me-2"></i>Document
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-align-left me-2"></i>Purpose
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-credit-card me-2"></i>Payment
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-dollar-sign me-2"></i>Amount
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-tasks me-2"></i>Status
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-calendar me-2"></i>Date
+                            </th>
+                            <th class="py-3 text-center">
+                                <i class="fas fa-cog me-2"></i>Action
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                            {% for req in requests %}
+                                {% url 'request_detail' req.order_id as detail_url %}
+                                <tr {% if active_request and req.id == active_request.id %}class="active-row"{% endif %} 
+                                    onclick="window.location.href='{{ detail_url }}'" 
+                                    style="cursor: pointer;">
+                            <td class="px-4 py-3">
+                                <strong class="text-primary font-monospace">{{ req.order_id }}</strong>
+                                {% if active_request and req.id == active_request.id %}
+                                    <br><span class="badge bg-warning text-dark badge-glow">
+                                        <i class="fas fa-star me-1"></i>Active
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <span class="badge bg-secondary bg-opacity-10 text-dark">
+                                    <i class="fas fa-file-alt me-1"></i>{{ req.get_document_type_display }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <span title="{{ req.purpose }}">{{ req.purpose|truncatewords:8 }}</span>
+                            </td>
+                            <td class="py-3">
+                                <div class="d-flex flex-column gap-1">
+                                    {% if req.payment_method == 'online' %}
+                                        <span class="badge bg-info">
+                                            <i class="fas fa-credit-card me-1"></i>Online
+                                        </span>
+                                    {% else %}
+                                        <span class="badge bg-success">
+                                            <i class="fas fa-money-bill me-1"></i>Cash
+                                        </span>
+                                    {% endif %}
+                                    <span class="badge bg-{% if req.payment_status == 'paid' %}success{% elif req.payment_status == 'failed' %}danger{% else %}warning text-dark{% endif %}">
+                                        {{ req.get_payment_status_display }}
+                                    </span>
+                                </div>
+                            </td>
+                            <td class="py-3"><strong>₱{{ req.payment_amount }}</strong></td>
+                            <td class="py-3">
+                                <span class="badge badge-glow bg-{% if req.status == 'pending' %}warning text-dark{% elif req.status == 'completed' %}success{% elif req.status == 'processing' %}info{% elif req.status == 'ready' %}primary{% else %}danger{% endif %}">
+                                    <i class="fas {% if req.status == 'pending' %}fa-clock{% elif req.status == 'processing' %}fa-spinner{% elif req.status == 'ready' %}fa-box{% elif req.status == 'completed' %}fa-check-circle{% else %}fa-times-circle{% endif %} me-1"></i>
+                                    {{ req.get_status_display }}
+                                </span>
+                            </td>
+                            <td class="py-3">
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>{{ req.created_at|date:"M d, Y" }}<br>
+                                    {{ req.created_at|date:"h:i A" }}
+                                </small>
+                            </td>
+                            <td class="py-3 text-center" onclick="event.stopPropagation()">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'request_detail' req.order_id %}" class="btn btn-sm btn-outline-primary" title="View Details">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    {% if req.status in 'pending,processing' %}
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmCancel('{{ req.order_id }}', '{{ req.get_document_type_display }}')" title="Cancel Request">
+                                        <i class="fas fa-times-circle"></i>
+                                    </button>
+                                    {% endif %}
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="8" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-4x mb-3 d-block"></i>
+                                <p class="mb-2">No requests found</p>
+                                <small class="text-muted">Start by submitting your first document request!</small>
+                                <br>
+                                <a href="{% url 'request' %}" class="btn btn-primary btn-sm mt-3">
+                                    <i class="fas fa-plus-circle me-2"></i>New Request
+                                </a>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Cancel Request Modal -->
+<div class="modal fade" id="cancelModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Cancel Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-times-circle fa-4x text-danger mb-3"></i>
+                <h5 class="mb-3">Are you sure you want to cancel this request?</h5>
+                <div class="alert alert-warning">
+                    <strong>Order ID:</strong> <span id="cancelOrderId"></span><br>
+                    <strong>Document:</strong> <span id="cancelDocType"></span>
+                </div>
+                <p class="text-muted small">
+                    <i class="fas fa-info-circle me-1"></i>
+                    After cancellation, you'll be able to submit a new request.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-arrow-left me-2"></i>No, Keep Request
+                </button>
+                <form id="cancelForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-times-circle me-2"></i>Yes, Cancel Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function filterByStatus(status) {
+    const form = document.getElementById('filterForm');
+    const statusSelect = form.querySelector('select[name="status"]');
+    statusSelect.value = status;
+    form.submit();
+}
+
+function clearFilters() {
+    window.location.href = "{% url 'my_requests' %}";
+}
+
+function confirmCancel(orderId, docType) {
+    const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    document.getElementById('cancelOrderId').textContent = orderId;
+    document.getElementById('cancelDocType').textContent = docType;
+    document.getElementById('cancelForm').action = `/request/cancel/${orderId}/`;
+    modal.show();
+}
+</script>
+{% endblock %}
