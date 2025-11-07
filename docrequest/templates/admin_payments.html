@@ -83,36 +83,49 @@
 
     <!-- Statistics -->
     <div class="row mb-4">
+        <!-- Card 1: Gross Revenue -->
         <div class="col-md-3 mb-3">
             <div class="stat-card glass-card">
                 <div class="stat-icon bg-success bg-opacity-10 text-success">
-                    <i class="fas fa-dollar-sign"></i>
+                    <i class="fas fa-arrow-down"></i>
                 </div>
                 <h3 class="text-success mb-1">₱{{ total_payments|floatformat:2 }}</h3>
-                <p class="text-muted mb-0">Total Revenue</p>
+                <p class="text-muted mb-0">Gross Revenue</p>
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    <i class="fas fa-info-circle me-1"></i>Total Collected
+                </small>
             </div>
         </div>
         
+        <!-- Card 2: Refunds -->
         <div class="col-md-3 mb-3">
             <div class="stat-card glass-card">
                 <div class="stat-icon bg-danger bg-opacity-10 text-danger">
-                    <i class="fas fa-undo"></i>
+                    <i class="fas fa-arrow-up"></i>
                 </div>
-                <h3 class="text-danger mb-1">₱{{ total_refunds|floatformat:2 }}</h3>
+                <h3 class="text-danger mb-1">-₱{{ total_refunds|floatformat:2 }}</h3>
                 <p class="text-muted mb-0">Total Refunds</p>
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    <i class="fas fa-undo me-1"></i>Money Returned
+                </small>
             </div>
         </div>
         
+        <!-- Card 3: Net Revenue (Most Important) -->
         <div class="col-md-3 mb-3">
-            <div class="stat-card glass-card">
-                <div class="stat-icon bg-warning bg-opacity-10 text-warning">
-                    <i class="fas fa-clock"></i>
+            <div class="stat-card glass-card" style="border: 3px solid #667eea; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);">
+                <div class="stat-icon" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);">
+                    <i class="fas fa-wallet text-white"></i>
                 </div>
-                <h3 class="text-warning mb-1">{{ pending_refunds }}</h3>
-                <p class="text-muted mb-0">Pending Refunds</p>
+                <h3 class="text-primary mb-1 fw-bold">₱{{ net_revenue|floatformat:2 }}</h3>
+                <p class="text-dark mb-0"><strong>Net Revenue</strong></p>
+                <small class="text-success" style="font-size: 0.75rem;">
+                    <i class="fas fa-check-circle me-1"></i>Actual Profit
+                </small>
             </div>
         </div>
         
+        <!-- Card 4: Today's Revenue -->
         <div class="col-md-3 mb-3">
             <div class="stat-card glass-card">
                 <div class="stat-icon bg-info bg-opacity-10 text-info">
@@ -120,6 +133,9 @@
                 </div>
                 <h3 class="text-info mb-1">₱{{ today_revenue|floatformat:2 }}</h3>
                 <p class="text-muted mb-0">Today's Revenue</p>
+                <small class="text-muted" style="font-size: 0.75rem;">
+                    <i class="far fa-clock me-1"></i>Last 24 Hours
+                </small>
             </div>
         </div>
     </div>

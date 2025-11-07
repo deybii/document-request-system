@@ -1206,7 +1206,7 @@ def admin_payments(request):
     paginator = Paginator(transactions, 20)
     page_obj = paginator.get_page(request.GET.get('page'))
     
-    # Statistics
+    # ✅ Statistics
     total_payments = PaymentTransaction.objects.filter(
         transaction_type='payment', status='completed'
     ).aggregate(total=Sum('amount'))['total'] or 0
@@ -1214,6 +1214,9 @@ def admin_payments(request):
     total_refunds = PaymentTransaction.objects.filter(
         transaction_type='refund', status='completed'
     ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    # ✅ Calculate Net Revenue
+    net_revenue = total_payments - total_refunds
     
     pending_refunds = PaymentTransaction.objects.filter(
         transaction_type='refund', status='pending'
@@ -1234,6 +1237,7 @@ def admin_payments(request):
         'date_to': date_to,
         'total_payments': total_payments,
         'total_refunds': total_refunds,
+        'net_revenue': net_revenue,
         'pending_refunds': pending_refunds,
         'today_revenue': today_revenue,
     }

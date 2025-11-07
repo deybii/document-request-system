@@ -92,33 +92,39 @@
         <div class="col-md-4 mb-3">
             <div class="stat-card glass-card">
                 <div class="mb-3">
-                    <i class="fas fa-dollar-sign fa-3x text-success"></i>
+                    <i class="fas fa-arrow-down fa-3x text-success"></i>
                 </div>
                 <h3 class="text-success mb-2">₱{{ total_revenue|floatformat:2 }}</h3>
-                <p class="text-muted mb-0">Total Revenue</p>
+                <p class="text-muted mb-0">Gross Revenue</p>
+                <small class="text-muted">(Total Payments Received)</small>
             </div>
         </div>
-        
+
         <div class="col-md-4 mb-3">
             <div class="stat-card glass-card">
                 <div class="mb-3">
-                    <i class="fas fa-undo fa-3x text-danger"></i>
+                    <i class="fas fa-arrow-up fa-3x text-danger"></i>
                 </div>
-                <h3 class="text-danger mb-2">₱{{ total_refunded|floatformat:2 }}</h3>
-                <p class="text-muted mb-0">Total Refunded</p>
+                <h3 class="text-danger mb-2">-₱{{ total_refunded|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">Total Refunds</p>
+                <small class="text-muted">(Money Returned to Users)</small>
             </div>
         </div>
-        
+
         <div class="col-md-4 mb-3">
-            <div class="stat-card glass-card">
+            <div class="stat-card glass-card" style="border: 3px solid #667eea; box-shadow: 0 4px 20px rgba(102, 126, 234, 0.3);">
                 <div class="mb-3">
-                    <i class="fas fa-chart-line fa-3x text-primary"></i>
+                    <i class="fas fa-wallet fa-3x text-primary"></i>
                 </div>
-                <h3 class="text-primary mb-2">₱{{ net_revenue|floatformat:2 }}</h3>
-                <p class="text-muted mb-0">Net Revenue</p>
+                <h3 class="text-primary mb-2 fw-bold">₱{{ net_revenue|floatformat:2 }}</h3>
+                <p class="text-dark mb-0"><strong>Net Revenue</strong></p>
+                <small class="text-success">
+                    <i class="fas fa-check-circle me-1"></i>Actual Earnings
+                </small>
             </div>
         </div>
     </div>
+
 
     <!-- Daily Revenue Chart -->
     <div class="glass-card mb-4">
