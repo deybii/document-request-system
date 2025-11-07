@@ -461,7 +461,7 @@ def admin_requests(request):
                     request, 
                     f'✅ Successfully deleted {count} request(s).'
                 )
-                
+
             elif bulk_action == 'export_selected':
                 # Export selected requests to CSV
                 response = HttpResponse(content_type='text/csv')
@@ -1068,3 +1068,262 @@ def admin_delete_request(request, order_id):
     
     # If GET, redirect to detail page
     return redirect('admin_request_detail', order_id=order_id)
+
+@staff_member_required
+def admin_payments(request):
+    """Admin payment tracking dashboard"""
+    from .models import PaymentTransaction
+    
+    transactions = PaymentTransaction.objects.all().select_related(
+        'request', 'request__user', 'processed_by'
+    ).order_by('-created_at')
+    
+    # Filters
+    transaction_type = request.GET.get('type', '')
+    if transaction_type:
+        transactions = transactions.filter(transaction_type=transaction_type)
+    
+    status_filter = request.GET.get('status', '')
+    if status_filter:
+        transactions = transactions.filter(status=status_filter)
+    
+    search_query = request.GET.get('search', '')
+    if search_query:
+        transactions = transactions.filter(
+            Q(reference_number__icontains=search_query) |
+            Q(request__order_id__icontains=search_query) |
+            Q(request__user__first_name__icontains=search_query) |
+            Q(request__user__last_name__icontains=search_query)
+        )
+    
+    # Date range
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            transactions = transactions.filter(created_at__date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            transactions = transactions.filter(created_at__date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # Pagination
+    paginator = Paginator(transactions, 20)
+    page_obj = paginator.get_page(request.GET.get('page'))
+    
+    # Statistics
+    total_payments = PaymentTransaction.objects.filter(
+        transaction_type='payment', status='completed'
+    ).aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    total_refunds = PaymentTransaction.objects.filter(
+        transaction_type='refund', status='completed'
+    ).aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    pending_refunds = PaymentTransaction.objects.filter(
+        transaction_type='refund', status='pending'
+    ).count()
+    
+    today_revenue = PaymentTransaction.objects.filter(
+        transaction_type='payment',
+        status='completed',
+        created_at__date=date.today()
+    ).aggregate(total=models.Sum('amount'))['total'] or 0
+    
+    context = {
+        'page_obj': page_obj,
+        'transaction_type': transaction_type,
+        'status_filter': status_filter,
+        'search_query': search_query,
+        'date_from': date_from,
+        'date_to': date_to,
+        'total_payments': total_payments,
+        'total_refunds': total_refunds,
+        'pending_refunds': pending_refunds,
+        'today_revenue': today_revenue,
+    }
+    return render(request, 'admin_payments.html', context)
+
+
+@staff_member_required
+def admin_payment_detail(request, transaction_id):
+    """View payment transaction details"""
+    from .models import PaymentTransaction
+    
+    transaction = get_object_or_404(PaymentTransaction, id=transaction_id)
+    
+    context = {'transaction': transaction}
+    return render(request, 'admin_payment_detail.html', context)
+
+
+@staff_member_required
+def admin_issue_refund(request, order_id):
+    """Issue refund for a request"""
+    from .models import PaymentTransaction
+    
+    doc_request = get_object_or_404(DocumentRequest, order_id=order_id)
+    
+    # Check if request has been paid
+    if doc_request.payment_status != 'paid':
+        messages.error(request, '❌ Cannot issue refund. Request has not been paid.')
+        return redirect('admin_request_detail', order_id=order_id)
+    
+    # Check if refund already exists
+    existing_refund = PaymentTransaction.objects.filter(
+        request=doc_request,
+        transaction_type='refund'
+    ).first()
+    
+    if existing_refund:
+        messages.warning(request, f'⚠️ Refund already exists for this request (Status: {existing_refund.get_status_display()})')
+        return redirect('admin_request_detail', order_id=order_id)
+    
+    if request.method == 'POST':
+        refund_amount = request.POST.get('refund_amount')
+        refund_reason = request.POST.get('refund_reason', '').strip()
+        
+        try:
+            refund_amount = float(refund_amount)
+            
+            # Validate refund amount
+            if refund_amount <= 0:
+                messages.error(request, '❌ Refund amount must be greater than 0.')
+                return redirect('admin_issue_refund', order_id=order_id)
+            
+            if refund_amount > float(doc_request.payment_amount):
+                messages.error(request, '❌ Refund amount cannot exceed payment amount.')
+                return redirect('admin_issue_refund', order_id=order_id)
+            
+            # Create refund transaction
+            refund = PaymentTransaction.objects.create(
+                request=doc_request,
+                transaction_type='refund',
+                amount=refund_amount,
+                status='completed',
+                payment_method=doc_request.payment_method,
+                refund_reason=refund_reason,
+                refund_approved_by=request.user,
+                processed_by=request.user,
+                processed_at=timezone.now(),
+                notes=f"Refund issued by {request.user.get_full_name()}"
+            )
+            
+            # Update request status
+            doc_request.payment_status = 'refunded' if refund_amount == doc_request.payment_amount else 'partially_refunded'
+            doc_request.status = 'rejected'  # Mark as rejected since refunded
+            doc_request.save()
+            
+            messages.success(
+                request,
+                f'✅ Refund of ₱{refund_amount} issued successfully! '
+                f'Reference: {refund.reference_number}',
+                extra_tags='safe'
+            )
+            return redirect('admin_request_detail', order_id=order_id)
+            
+        except ValueError:
+            messages.error(request, '❌ Invalid refund amount.')
+        except Exception as e:
+            messages.error(request, f'❌ Error issuing refund: {str(e)}')
+    
+    context = {'doc_request': doc_request}
+    return render(request, 'admin_issue_refund.html', context)
+
+
+@staff_member_required
+def admin_approve_refund(request, transaction_id):
+    """Approve a pending refund"""
+    from .models import PaymentTransaction
+    
+    transaction = get_object_or_404(PaymentTransaction, id=transaction_id)
+    
+    if transaction.transaction_type != 'refund':
+        messages.error(request, '❌ This is not a refund transaction.')
+        return redirect('admin_payments')
+    
+    if request.method == 'POST':
+        transaction.status = 'completed'
+        transaction.refund_approved_by = request.user
+        transaction.processed_by = request.user
+        transaction.processed_at = timezone.now()
+        transaction.save()
+        
+        messages.success(request, f'✅ Refund {transaction.reference_number} approved!')
+        return redirect('admin_payments')
+    
+    return redirect('admin_payment_detail', transaction_id=transaction_id)
+
+
+@staff_member_required
+def admin_payment_reports(request):
+    """Generate payment reports"""
+    from .models import PaymentTransaction
+    from django.db.models import Sum, Count
+    from django.db.models.functions import TruncDate
+    
+    # Date range
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    transactions = PaymentTransaction.objects.filter(status='completed')
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            transactions = transactions.filter(created_at__date__gte=date_from_obj)
+        except ValueError:
+            pass
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            transactions = transactions.filter(created_at__date__lte=date_to_obj)
+        except ValueError:
+            pass
+    
+    # Daily revenue breakdown
+    daily_revenue = transactions.filter(
+        transaction_type='payment'
+    ).annotate(
+        date=TruncDate('created_at')
+    ).values('date').annotate(
+        revenue=Sum('amount'),
+        count=Count('id')
+    ).order_by('-date')[:30]
+    
+    # Payment method breakdown
+    payment_methods = DocumentRequest.objects.filter(
+        payment_status='paid'
+    ).values('payment_method').annotate(
+        count=Count('id'),
+        total=Sum('payment_amount')
+    )
+    
+    # Summary statistics
+    total_revenue = transactions.filter(transaction_type='payment').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    total_refunded = transactions.filter(transaction_type='refund').aggregate(
+        total=Sum('amount')
+    )['total'] or 0
+    
+    net_revenue = total_revenue - total_refunded
+    
+    context = {
+        'daily_revenue': daily_revenue,
+        'payment_methods': payment_methods,
+        'total_revenue': total_revenue,
+        'total_refunded': total_refunded,
+        'net_revenue': net_revenue,
+        'date_from': date_from,
+        'date_to': date_to,
+    }
+    return render(request, 'admin_payment_reports.html', context)

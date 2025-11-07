@@ -419,7 +419,13 @@
                             </button>
 
                             <hr>
-                
+
+                            {% if doc_request.payment_status == 'paid' %}
+                            <a href="{% url 'admin_issue_refund' doc_request.order_id %}" class="btn btn-outline-danger">
+                                <i class="fas fa-undo me-2"></i>Issue Refund
+                            </a>
+                            {% endif %}
+                            
                             <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRequestModal">
                                 <i class="fas fa-trash-alt me-2"></i>Delete Request
                             </button>

@@ -1,0 +1,158 @@
+{% extends 'base.html' %}
+
+{% block title %}Issue Refund - {{ doc_request.order_id }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.header-card {
+    background: var(--danger-gradient);
+    color: white;
+    border-radius: 20px;
+    padding: 2rem;
+    margin-bottom: 2rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 pb-5">
+    <a href="{% url 'admin_request_detail' doc_request.order_id %}" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left me-2"></i>Back to Request
+    </a>
+
+    <div class="header-card">
+        <h2>
+            <i class="fas fa-undo me-3"></i>Issue Refund
+        </h2>
+        <p class="mb-0 opacity-75">Process refund for Order ID: {{ doc_request.order_id }}</p>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8">
+            <div class="glass-card p-4">
+                <form method="post">
+                    {% csrf_token %}
+                    
+                    <h5 class="mb-4">
+                        <i class="fas fa-file-invoice-dollar text-success me-2"></i>Refund Details
+                    </h5>
+                    
+                    <div class="alert alert-info mb-4">
+                        <strong>Original Payment:</strong> ₱{{ doc_request.payment_amount }}<br>
+                        <strong>Payment Method:</strong> {{ doc_request.get_payment_method_display }}<br>
+                        <strong>Payment Reference:</strong> {{ doc_request.payment_reference|default:"N/A" }}
+                    </div>
+                    
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-money-bill-wave me-1"></i>Refund Amount *
+                        </label>
+                        <div class="input-group input-group-lg">
+                            <span class="input-group-text">₱</span>
+                            <input type="number" 
+                                   name="refund_amount" 
+                                   class="form-control" 
+                                   step="0.01" 
+                                   min="0.01" 
+                                   max="{{ doc_request.payment_amount }}" 
+                                   value="{{ doc_request.payment_amount }}" 
+                                   required>
+                        </div>
+                        <small class="text-muted">
+                            <i class="fas fa-info-circle me-1"></i>
+                            Maximum: ₱{{ doc_request.payment_amount }}
+                        </small>
+                    </div>
+
+                    <div class="mb-4">
+                        <label class="form-label fw-semibold">
+                            <i class="fas fa-comment me-1"></i>Refund Reason *
+                        </label>
+                        <textarea name="refund_reason" 
+                                  class="form-control" 
+                                  rows="4" 
+                                  placeholder="Explain why this refund is being issued..." 
+                                  required></textarea>
+                    </div>
+
+                    <div class="alert alert-warning">
+                        <h6 class="alert-heading">
+                            <i class="fas fa-exclamation-triangle me-2"></i>Important
+                        </h6>
+                        <ul class="small mb-0">
+                            <li>This will mark the request as refunded/rejected</li>
+                            <li>Refund will be processed via {{ doc_request.get_payment_method_display }}</li>
+                            <li>Student will be notified of the refund</li>
+                            <li>This action cannot be easily undone</li>
+                        </ul>
+                    </div>
+
+                    <div class="d-flex gap-2">
+                        <button type="submit" class="btn btn-danger btn-lg">
+                            <i class="fas fa-undo me-2"></i>Issue Refund
+                        </button>
+                        <a href="{% url 'admin_request_detail' doc_request.order_id %}" class="btn btn-outline-secondary btn-lg">
+                            <i class="fas fa-times me-2"></i>Cancel
+                        </a>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div class="col-lg-4">
+            <div class="glass-card p-4 mb-3">
+                <h6 class="fw-bold mb-3">
+                    <i class="fas fa-file-alt text-primary me-2"></i>Request Summary
+                </h6>
+                <ul class="list-unstyled mb-0">
+                    <li class="mb-2">
+                        <i class="fas fa-barcode text-muted me-2"></i>
+                        <strong>Order ID:</strong><br>
+                        <code>{{ doc_request.order_id }}</code>
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-user text-muted me-2"></i>
+                        <strong>Student:</strong><br>
+                        {{ doc_request.user.get_full_name }}
+                    </li>
+                    <li class="mb-2">
+                        <i class="fas fa-file text-muted me-2"></i>
+                        <strong>Document:</strong><br>
+                        {{ doc_request.get_document_type_display }}
+                    </li>
+                    <li>
+                        <i class="fas fa-calendar text-muted me-2"></i>
+                        <strong>Submitted:</strong><br>
+                        {{ doc_request.created_at|date:"M d, Y" }}
+                    </li>
+                </ul>
+            </div>
+
+            <div class="alert alert-danger">
+                <h6 class="alert-heading">
+                    <i class="fas fa-exclamation-circle me-2"></i>Refund Policy
+                </h6>
+                <ul class="small mb-0">
+                    <li>Full refunds within 24 hours of payment</li>
+                    <li>Partial refunds if processing started</li>
+                    <li>No refunds if document is ready</li>
+                    <li>Processing time: 3-5 business days</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

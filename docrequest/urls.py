@@ -26,4 +26,9 @@ urlpatterns = [
     path('dashboard/message/delete/<int:message_id>/', views.admin_delete_contact_message, name='admin_delete_contact_message'),
     path('admin-edit-user/<int:profile_id>/', views.admin_edit_user, name='admin_edit_user'),
     path('admin-delete-user/<int:profile_id>/', views.admin_delete_user, name='admin_delete_user'),
+    path('dashboard/payments/', views.admin_payments, name='admin_payments'),
+    path('dashboard/payment/<int:transaction_id>/', views.admin_payment_detail, name='admin_payment_detail'),
+    path('dashboard/payment/refund/<str:order_id>/', views.admin_issue_refund, name='admin_issue_refund'),
+    path('dashboard/payment/approve-refund/<int:transaction_id>/', views.admin_approve_refund, name='admin_approve_refund'),
+    path('dashboard/payment/reports/', views.admin_payment_reports, name='admin_payment_reports'),
 ]
