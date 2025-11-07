@@ -287,7 +287,10 @@
                                         <i class="fas fa-eye"></i>
                                     </a>
                                     {% if req.status in 'pending,processing' %}
-                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmCancel('{{ req.order_id }}', '{{ req.get_document_type_display }}')" title="Cancel Request">
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger" 
+                                            onclick="confirmCancel('{{ req.order_id }}', '{{ req.get_document_type_display }}', '{{ req.payment_status }}', '{{ req.payment_amount }}')" 
+                                            title="Cancel Request">
                                         <i class="fas fa-times-circle"></i>
                                     </button>
                                     {% endif %}
@@ -331,6 +334,10 @@
                     <strong>Order ID:</strong> <span id="cancelOrderId"></span><br>
                     <strong>Document:</strong> <span id="cancelDocType"></span>
                 </div>
+                
+                <!-- ✅ Add refund info dynamically via JavaScript -->
+                <div id="refundInfo"></div>
+                
                 <p class="text-muted small">
                     <i class="fas fa-info-circle me-1"></i>
                     After cancellation, you'll be able to submit a new request.
@@ -342,7 +349,7 @@
                 </button>
                 <form id="cancelForm" method="post" style="display: inline;">
                     {% csrf_token %}
-                    <button type="submit" class="btn btn-danger">
+                    <button type="submit" class="btn btn-danger" id="cancelSubmitBtn">
                         <i class="fas fa-times-circle me-2"></i>Yes, Cancel Request
                     </button>
                 </form>
@@ -360,14 +367,37 @@ function filterByStatus(status) {
 }
 
 function clearFilters() {
-    window.location.href = "{% url 'my_requests' %}";
+    window.location.href = '{% url "my_requests" %}';
 }
 
-function confirmCancel(orderId, docType) {
+function confirmCancel(orderId, docType, paymentStatus, paymentAmount) {
     const modal = new bootstrap.Modal(document.getElementById('cancelModal'));
+    const refundInfo = document.getElementById('refundInfo');
+    const submitBtn = document.getElementById('cancelSubmitBtn');
+    
     document.getElementById('cancelOrderId').textContent = orderId;
     document.getElementById('cancelDocType').textContent = docType;
     document.getElementById('cancelForm').action = `/request/cancel/${orderId}/`;
+    
+    // Show refund information if paid
+    if (paymentStatus === 'paid') {
+        refundInfo.innerHTML = `
+            <div class="alert alert-success">
+                <h6 class="alert-heading mb-2">
+                    <i class="fas fa-undo me-2"></i>Automatic Refund
+                </h6>
+                <p class="mb-0">
+                    Since you've paid <strong>₱${paymentAmount}</strong>, 
+                    a <strong>full refund</strong> will be automatically processed.
+                </p>
+            </div>
+        `;
+        submitBtn.innerHTML = '<i class="fas fa-times-circle me-2"></i>Yes, Cancel & Refund';
+    } else {
+        refundInfo.innerHTML = '';
+        submitBtn.innerHTML = '<i class="fas fa-times-circle me-2"></i>Yes, Cancel Request';
+    }
+    
     modal.show();
 }
 </script>

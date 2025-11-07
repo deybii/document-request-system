@@ -8,10 +8,12 @@ from django.db.models import Count, Q
 from django.core.paginator import Paginator
 from django.http import HttpResponse
 from .forms import RegisterForm, LoginForm, DocumentRequestForm, ContactForm
-from .models import DocumentRequest, UserProfile
+from .models import DocumentRequest, PaymentTransaction, UserProfile
 from datetime import date, datetime
 import uuid
 import csv
+
+from docrequest import models
 
 
 def index(request):
@@ -175,6 +177,18 @@ def simulated_payment(request, order_id):
             doc_request.payment_reference = f"SIM-{uuid.uuid4().hex[:8].upper()}"
             doc_request.save()
             
+            # ✅ Create payment transaction record
+            from .models import PaymentTransaction
+            PaymentTransaction.objects.create(
+                request=doc_request,
+                transaction_type='payment',
+                amount=doc_request.payment_amount,
+                status='completed',
+                payment_method=doc_request.payment_method,
+                processed_at=timezone.now(),
+                notes=f"Payment completed via {doc_request.get_payment_method_display()}"
+            )
+            
             messages.success(request, f'✅ Payment successful! Reference: {doc_request.payment_reference}')
             return redirect('request_success', order_id=doc_request.order_id)
         
@@ -316,6 +330,10 @@ def logout_view(request):
 @staff_member_required
 def admin_dashboard(request):
     """Enhanced admin dashboard"""
+
+    from .models import ContactMessage, PaymentTransaction
+    from django.db.models import Sum
+
     # Request Statistics
     total_requests = DocumentRequest.objects.count()
     pending_requests = DocumentRequest.objects.filter(status='pending').count()
@@ -359,7 +377,22 @@ def admin_dashboard(request):
         payment_status='paid',
         payment_date__date=today
     ).count()
+
+    # Payment Transactions Summary
+    total_revenue = PaymentTransaction.objects.filter(
+        transaction_type='payment',
+        status='completed'
+    ).aggregate(total=Sum('amount'))['total'] or 0
     
+    total_refunded = PaymentTransaction.objects.filter(
+        transaction_type='refund',
+        status='completed'
+    ).aggregate(total=Sum('amount'))['total'] or 0
+    
+    pending_refunds_count = PaymentTransaction.objects.filter(
+        transaction_type='refund',
+        status='pending'
+    ).count()
     context = {
         'total_requests': total_requests,
         'pending_requests': pending_requests,
@@ -722,6 +755,19 @@ def admin_request_detail(request, order_id):
             doc_request.payment_date = timezone.now()
             doc_request.payment_reference = f"CASH-{uuid.uuid4().hex[:8].upper()}"
             doc_request.save()
+
+            from .models import PaymentTransaction
+            PaymentTransaction.objects.create(
+                request=doc_request,
+                transaction_type='payment',
+                amount=doc_request.payment_amount,
+                status='completed',
+                payment_method=doc_request.payment_method,
+                processed_by=request.user,
+                processed_at=timezone.now(),
+                notes=f"Cash payment confirmed by admin"
+            )
+            
             messages.success(request, f'✅ Cash payment confirmed for {order_id}')
         
         elif action == 'reject':
@@ -936,7 +982,9 @@ def edit_profile(request):
 
 @login_required
 def cancel_request(request, order_id):
-    """Allow users to cancel their own pending/processing requests"""
+    """Allow users to cancel their own pending/processing requests with automatic refund"""
+    from .models import PaymentTransaction
+    
     doc_request = get_object_or_404(DocumentRequest, order_id=order_id, user=request.user)
     
     # Only allow cancellation if request is pending or processing
@@ -950,17 +998,56 @@ def cancel_request(request, order_id):
         return redirect('request_detail', order_id=order_id)
     
     if request.method == 'POST':
+        # Check if payment was made
+        is_paid = doc_request.payment_status == 'paid'
+        refund_amount = doc_request.payment_amount if is_paid else 0
+        
         # Update request status to rejected/cancelled
         doc_request.status = 'rejected'
-        doc_request.notes = f"{doc_request.notes}\n\n[CANCELLED BY USER on {timezone.now().strftime('%Y-%m-%d %H:%M')}]" if doc_request.notes else f"[CANCELLED BY USER on {timezone.now().strftime('%Y-%m-%d %H:%M')}]"
+        cancellation_note = f"[CANCELLED BY USER on {timezone.now().strftime('%Y-%m-%d %H:%M')}]"
+        
+        if is_paid:
+            cancellation_note += f"\n[AUTOMATIC REFUND ISSUED: ₱{refund_amount}]"
+        
+        doc_request.notes = f"{doc_request.notes}\n\n{cancellation_note}" if doc_request.notes else cancellation_note
         doc_request.save()
         
-        messages.success(
-            request,
-            f'✅ Request {order_id} has been cancelled successfully. '
-            f'You can now submit a new request.',
-            extra_tags='safe'
-        )
+        # ✅ Issue automatic refund if payment was made
+        if is_paid:
+            # Create refund transaction
+            refund = PaymentTransaction.objects.create(
+                request=doc_request,
+                transaction_type='refund',
+                amount=refund_amount,
+                status='completed',
+                payment_method=doc_request.payment_method,
+                refund_reason=f"Request cancelled by user. Automatic full refund issued.",
+                processed_by=request.user,
+                processed_at=timezone.now(),
+                notes=f"Automatic refund - User cancelled request {order_id}"
+            )
+            
+            # Update payment status
+            doc_request.payment_status = 'refunded'
+            doc_request.save()
+            
+            messages.success(
+                request,
+                f'✅ Request {order_id} has been cancelled successfully. '
+                f'A refund of <strong>₱{refund_amount}</strong> has been issued. '
+                f'Refund Reference: <strong>{refund.reference_number}</strong>. '
+                f'You can now submit a new request.',
+                extra_tags='safe'
+            )
+        else:
+            # No payment was made, just cancel
+            messages.success(
+                request,
+                f'✅ Request {order_id} has been cancelled successfully. '
+                f'You can now submit a new request.',
+                extra_tags='safe'
+            )
+        
         return redirect('my_requests')
     
     # If GET request, redirect to detail page
@@ -1073,6 +1160,7 @@ def admin_delete_request(request, order_id):
 def admin_payments(request):
     """Admin payment tracking dashboard"""
     from .models import PaymentTransaction
+    from django.db.models import Sum
     
     transactions = PaymentTransaction.objects.all().select_related(
         'request', 'request__user', 'processed_by'
@@ -1121,11 +1209,11 @@ def admin_payments(request):
     # Statistics
     total_payments = PaymentTransaction.objects.filter(
         transaction_type='payment', status='completed'
-    ).aggregate(total=models.Sum('amount'))['total'] or 0
+    ).aggregate(total=Sum('amount'))['total'] or 0
     
     total_refunds = PaymentTransaction.objects.filter(
         transaction_type='refund', status='completed'
-    ).aggregate(total=models.Sum('amount'))['total'] or 0
+    ).aggregate(total=Sum('amount'))['total'] or 0
     
     pending_refunds = PaymentTransaction.objects.filter(
         transaction_type='refund', status='pending'
@@ -1135,7 +1223,7 @@ def admin_payments(request):
         transaction_type='payment',
         status='completed',
         created_at__date=date.today()
-    ).aggregate(total=models.Sum('amount'))['total'] or 0
+    ).aggregate(total=Sum('amount'))['total'] or 0
     
     context = {
         'page_obj': page_obj,

@@ -470,8 +470,31 @@
                     <strong>Document:</strong> {{ doc_request.get_document_type_display }}<br>
                     <strong>Status:</strong> {{ doc_request.get_status_display }}
                 </div>
+                
+                <!-- ✅ Refund Information -->
+                {% if doc_request.payment_status == 'paid' %}
+                <div class="alert alert-success">
+                    <h6 class="alert-heading mb-2">
+                        <i class="fas fa-undo me-2"></i>Automatic Refund
+                    </h6>
+                    <p class="mb-0">
+                        Since you've already paid <strong>₱{{ doc_request.payment_amount }}</strong>, 
+                        a <strong>full refund</strong> will be automatically processed.
+                    </p>
+                    <small class="text-muted">
+                        <i class="fas fa-info-circle me-1"></i>
+                        Refund will be processed via {{ doc_request.get_payment_method_display }}
+                    </small>
+                </div>
+                {% else %}
                 <p class="text-muted small mb-0">
                     <i class="fas fa-info-circle me-1"></i>
+                    No payment has been made yet. Cancellation is free.
+                </p>
+                {% endif %}
+                
+                <p class="text-muted small mt-3 mb-0">
+                    <i class="fas fa-check-circle me-1"></i>
                     After cancellation, you'll be able to submit a new request.
                 </p>
             </div>
@@ -482,7 +505,12 @@
                 <form action="{% url 'cancel_request' doc_request.order_id %}" method="post" style="display: inline;">
                     {% csrf_token %}
                     <button type="submit" class="btn btn-danger">
-                        <i class="fas fa-times-circle me-2"></i>Yes, Cancel Request
+                        <i class="fas fa-times-circle me-2"></i>
+                        {% if doc_request.payment_status == 'paid' %}
+                            Yes, Cancel & Refund
+                        {% else %}
+                            Yes, Cancel Request
+                        {% endif %}
                     </button>
                 </form>
             </div>

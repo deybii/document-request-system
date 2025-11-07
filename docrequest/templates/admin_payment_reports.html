@@ -1,0 +1,262 @@
+{% extends 'base.html' %}
+
+{% block title %}Payment Reports - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.stat-card {
+    padding: 2rem;
+    border-radius: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: 0 8px 16px rgba(0, 0, 0, 0.1);
+}
+
+.chart-container {
+    position: relative;
+    height: 350px;
+    margin: 20px 0;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 pb-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <div>
+            <h2 class="mb-2">
+                <i class="fas fa-chart-line text-success"></i>
+                <span class="ms-2">Payment Reports</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-calendar me-2"></i>
+                Financial analytics and revenue tracking
+            </p>
+        </div>
+        <div class="btn-group">
+            <a href="{% url 'admin_payments' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Back
+            </a>
+            <button class="btn btn-primary" onclick="exportReport()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Date Filter -->
+    <div class="glass-card p-4 mb-4">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-calendar me-1"></i>From Date
+                </label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-4">
+                <label class="form-label fw-semibold">
+                    <i class="fas fa-calendar me-1"></i>To Date
+                </label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-4">
+                <button type="submit" class="btn btn-primary w-100">
+                    <i class="fas fa-sync me-2"></i>Generate Report
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Summary Cards -->
+    <div class="row mb-4">
+        <div class="col-md-4 mb-3">
+            <div class="stat-card glass-card">
+                <div class="mb-3">
+                    <i class="fas fa-dollar-sign fa-3x text-success"></i>
+                </div>
+                <h3 class="text-success mb-2">₱{{ total_revenue|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">Total Revenue</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="stat-card glass-card">
+                <div class="mb-3">
+                    <i class="fas fa-undo fa-3x text-danger"></i>
+                </div>
+                <h3 class="text-danger mb-2">₱{{ total_refunded|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">Total Refunded</p>
+            </div>
+        </div>
+        
+        <div class="col-md-4 mb-3">
+            <div class="stat-card glass-card">
+                <div class="mb-3">
+                    <i class="fas fa-chart-line fa-3x text-primary"></i>
+                </div>
+                <h3 class="text-primary mb-2">₱{{ net_revenue|floatformat:2 }}</h3>
+                <p class="text-muted mb-0">Net Revenue</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Daily Revenue Chart -->
+    <div class="glass-card mb-4">
+        <div class="card-header bg-transparent border-0 pt-4">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-chart-bar text-primary me-2"></i>Daily Revenue (Last 30 Days)
+            </h5>
+        </div>
+        <div class="card-body">
+            <div class="chart-container">
+                <canvas id="revenueChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Payment Methods Breakdown -->
+    <div class="row">
+        <div class="col-md-6 mb-4">
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-credit-card text-info me-2"></i>Payment Methods
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <table class="table table-sm">
+                        <thead>
+                            <tr>
+                                <th>Method</th>
+                                <th class="text-end">Count</th>
+                                <th class="text-end">Total</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {% for method in payment_methods %}
+                            <tr>
+                                <td>
+                                    {% if method.payment_method == 'online' %}
+                                        <i class="fas fa-credit-card text-info me-2"></i>Online
+                                    {% else %}
+                                        <i class="fas fa-money-bill text-success me-2"></i>Cash
+                                    {% endif %}
+                                </td>
+                                <td class="text-end">{{ method.count }}</td>
+                                <td class="text-end"><strong>₱{{ method.total|floatformat:2 }}</strong></td>
+                            </tr>
+                            {% endfor %}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6 mb-4">
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-chart-pie text-success me-2"></i>Revenue by Day
+                    </h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive" style="max-height: 400px; overflow-y: auto;">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Date</th>
+                                    <th class="text-end">Transactions</th>
+                                    <th class="text-end">Revenue</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for day in daily_revenue %}
+                                <tr>
+                                    <td>{{ day.date|date:"M d, Y" }}</td>
+                                    <td class="text-end">{{ day.count }}</td>
+                                    <td class="text-end"><strong class="text-success">₱{{ day.revenue|floatformat:2 }}</strong></td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+// Revenue Chart
+const ctx = document.getElementById('revenueChart').getContext('2d');
+const revenueData = {
+    labels: [{% for day in daily_revenue %}'{{ day.date|date:"M d" }}',{% endfor %}],
+    datasets: [{
+        label: 'Daily Revenue (₱)',
+        data: [{% for day in daily_revenue %}{{ day.revenue|default:0 }},{% endfor %}],
+        backgroundColor: 'rgba(102, 126, 234, 0.2)',
+        borderColor: 'rgba(102, 126, 234, 1)',
+        borderWidth: 2,
+        fill: true,
+        tension: 0.4
+    }]
+};
+
+new Chart(ctx, {
+    type: 'line',
+    data: revenueData,
+    options: {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: {
+                display: true,
+                position: 'top'
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return 'Revenue: ₱' + context.parsed.y.toFixed(2);
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                ticks: {
+                    callback: function(value) {
+                        return '₱' + value;
+                    }
+                }
+            }
+        }
+    }
+});
+
+function exportReport() {
+    alert('Export Report:\n• PDF Report\n• Excel Spreadsheet\n• CSV Data\n\nWould be implemented here.');
+}
+</script>
+{% endblock %}

@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block title %}Transaction Details - {{ transaction.reference_number }}{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --danger-gradient: linear-gradient(135deg, #eb3349 0%, #f45c43 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.header-card {
+    {% if transaction.transaction_type == 'payment' %}
+        background: var(--success-gradient);
+    {% elif transaction.transaction_type == 'refund' %}
+        background: var(--danger-gradient);
+    {% else %}
+        background: var(--primary-gradient);
+    {% endif %}
+    color: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-row {
+    padding: 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-row:hover {
+    background: rgba(102, 126, 234, 0.03);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    font-size: 1.1rem;
+    color: #212529;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 pb-5">
+    <a href="{% url 'admin_payments' %}" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left me-2"></i>Back to Payments
+    </a>
+
+    <!-- Header -->
+    <div class="header-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas {% if transaction.transaction_type == 'payment' %}fa-arrow-down{% elif transaction.transaction_type == 'refund' %}fa-undo{% else %}fa-sync{% endif %} me-3"></i>
+                    {{ transaction.get_transaction_type_display }} Transaction
+                </h2>
+                <h4 class="font-monospace mb-0">{{ transaction.reference_number }}</h4>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <span class="badge badge-xl bg-{% if transaction.status == 'completed' %}success{% elif transaction.status == 'failed' %}danger{% else %}warning text-dark{% endif %}">
+                    <i class="fas {% if transaction.status == 'completed' %}fa-check-circle{% elif transaction.status == 'failed' %}fa-times-circle{% else %}fa-clock{% endif %} me-2"></i>
+                    {{ transaction.get_status_display }}
+                </span>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <!-- Transaction Details -->
+        <div class="col-lg-8 mb-4">
+            <!-- Basic Information -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-info-circle text-primary me-2"></i>Transaction Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-barcode me-2"></i>Reference Number
+                        </div>
+                        <div class="info-value">
+                            <code class="text-primary fs-5">{{ transaction.reference_number }}</code>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-file-alt me-2"></i>Related Order
+                        </div>
+                        <div class="info-value">
+                            <a href="{% url 'admin_request_detail' transaction.request.order_id %}" class="text-primary text-decoration-none">
+                                {{ transaction.request.order_id }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-user me-2"></i>Student
+                        </div>
+                        <div class="info-value">
+                            {{ transaction.request.user.get_full_name }}
+                            <br><small class="text-muted">{{ transaction.request.user.email }}</small>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-tag me-2"></i>Transaction Type
+                        </div>
+                        <div class="info-value">
+                            <span class="badge bg-{% if transaction.transaction_type == 'payment' %}success{% elif transaction.transaction_type == 'refund' %}danger{% else %}info{% endif %}" style="font-size: 1rem; padding: 8px 16px;">
+                                {{ transaction.get_transaction_type_display }}
+                            </span>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-money-bill-wave me-2"></i>Amount
+                        </div>
+                        <div class="info-value">
+                            <h3 class="mb-0 {% if transaction.transaction_type == 'refund' %}text-danger{% else %}text-success{% endif %}">
+                                {% if transaction.transaction_type == 'refund' %}-{% endif %}₱{{ transaction.amount }}
+                            </h3>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-credit-card me-2"></i>Payment Method
+                        </div>
+                        <div class="info-value">
+                            {% if transaction.payment_method == 'online' %}
+                                <i class="fas fa-credit-card text-info me-2"></i>Online Payment
+                            {% else %}
+                                <i class="fas fa-money-bill text-success me-2"></i>Cash Payment
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Refund Information (if applicable) -->
+            {% if transaction.transaction_type == 'refund' %}
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-undo text-danger me-2"></i>Refund Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-comment me-2"></i>Refund Reason
+                        </div>
+                        <div class="info-value" style="white-space: pre-line;">
+                            {{ transaction.refund_reason|default:"No reason provided" }}
+                        </div>
+                    </div>
+                    {% if transaction.refund_approved_by %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-user-shield me-2"></i>Approved By
+                        </div>
+                        <div class="info-value">
+                            {{ transaction.refund_approved_by.get_full_name }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+            {% endif %}
+
+            <!-- Processing Information -->
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-cog text-warning me-2"></i>Processing Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    {% if transaction.processed_by %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-user me-2"></i>Processed By
+                        </div>
+                        <div class="info-value">
+                            {{ transaction.processed_by.get_full_name }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    {% if transaction.processed_at %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-check me-2"></i>Processed At
+                        </div>
+                        <div class="info-value">
+                            {{ transaction.processed_at|date:"F d, Y at h:i A" }}
+                        </div>
+                    </div>
+                    {% endif %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar-plus me-2"></i>Created At
+                        </div>
+                        <div class="info-value">
+                            {{ transaction.created_at|date:"F d, Y at h:i A" }}
+                        </div>
+                    </div>
+                    {% if transaction.notes %}
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-sticky-note me-2"></i>Notes
+                        </div>
+                        <div class="info-value" style="white-space: pre-line;">
+                            {{ transaction.notes }}
+                        </div>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="glass-card mb-3">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="{% url 'admin_request_detail' transaction.request.order_id %}" class="btn btn-primary">
+                            <i class="fas fa-file-alt me-2"></i>View Request
+                        </a>
+                        <a href="{% url 'admin_payments' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Payments
+                        </a>
+                        <button class="btn btn-outline-primary" onclick="window.print()">
+                            <i class="fas fa-print me-2"></i>Print Receipt
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Transaction Summary -->
+            <div class="alert alert-{% if transaction.transaction_type == 'payment' %}success{% elif transaction.transaction_type == 'refund' %}danger{% else %}info{% endif %}">
+                <h6 class="alert-heading">
+                    <i class="fas fa-file-invoice-dollar me-2"></i>Transaction Summary
+                </h6>
+                <ul class="small mb-0">
+                    <li>Type: {{ transaction.get_transaction_type_display }}</li>
+                    <li>Amount: ₱{{ transaction.amount }}</li>
+                    <li>Status: {{ transaction.get_status_display }}</li>
+                    <li>Method: {{ transaction.payment_method|default:"N/A" }}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
