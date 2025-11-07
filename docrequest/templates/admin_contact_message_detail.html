@@ -1,0 +1,229 @@
+{% extends 'base.html' %}
+
+{% block title %}Message Detail{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+}
+
+.header-card {
+    background: var(--primary-gradient);
+    color: white;
+    border-radius: 20px;
+    padding: 2.5rem;
+    margin-bottom: 2rem;
+}
+
+.info-row {
+    padding: 1.25rem;
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.info-row:last-child {
+    border-bottom: none;
+}
+
+.info-label {
+    font-weight: 600;
+    color: #6c757d;
+    margin-bottom: 0.5rem;
+    font-size: 0.9rem;
+}
+
+.info-value {
+    font-size: 1.05rem;
+    color: #212529;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container mt-4 pb-5">
+    <a href="{% url 'admin_contact_messages' %}" class="btn btn-outline-secondary mb-3">
+        <i class="fas fa-arrow-left me-2"></i>Back to Messages
+    </a>
+
+    <div class="header-card">
+        <div class="row align-items-center">
+            <div class="col-md-8">
+                <h2 class="mb-2">
+                    <i class="fas fa-envelope-open me-3"></i>Contact Message
+                </h2>
+                <p class="mb-0 opacity-75">
+                    <i class="far fa-clock me-2"></i>
+                    Received on {{ contact_message.created_at|date:"F d, Y at h:i A" }}
+                </p>
+            </div>
+            <div class="col-md-4 text-md-end">
+                <a href="mailto:{{ contact_message.email }}?subject=Re: {{ contact_message.subject }}" class="btn btn-light">
+                    <i class="fas fa-reply me-2"></i>Reply via Email
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-8 mb-4">
+            <!-- Sender Information -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-user text-primary me-2"></i>Sender Information
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-user me-2"></i>Name
+                        </div>
+                        <div class="info-value">{{ contact_message.name }}</div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-envelope me-2"></i>Email Address
+                        </div>
+                        <div class="info-value">
+                            <a href="mailto:{{ contact_message.email }}" class="text-primary text-decoration-none">
+                                {{ contact_message.email }}
+                            </a>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-calendar me-2"></i>Submitted
+                        </div>
+                        <div class="info-value">
+                            {{ contact_message.created_at|date:"F d, Y at h:i A" }}
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Content -->
+            <div class="glass-card mb-4">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-comment-alt text-success me-2"></i>Message Content
+                    </h5>
+                </div>
+                <div class="card-body p-0">
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-tag me-2"></i>Subject
+                        </div>
+                        <div class="info-value">
+                            <strong>{{ contact_message.subject }}</strong>
+                        </div>
+                    </div>
+                    <div class="info-row">
+                        <div class="info-label">
+                            <i class="fas fa-align-left me-2"></i>Message
+                        </div>
+                        <div class="info-value" style="white-space: pre-line;">{{ contact_message.message }}</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Attachment -->
+            {% if contact_message.attachment %}
+            <div class="glass-card">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h5 class="mb-0 fw-bold">
+                        <i class="fas fa-paperclip text-warning me-2"></i>Attachment
+                    </h5>
+                </div>
+                <div class="card-body p-4">
+                    <div class="text-center">
+                        <img src="{{ contact_message.attachment.url }}" alt="Attachment" class="img-fluid rounded shadow" style="max-height: 400px;">
+                        <div class="mt-3">
+                            <a href="{{ contact_message.attachment.url }}" target="_blank" class="btn btn-outline-primary">
+                                <i class="fas fa-download me-2"></i>Download Attachment
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <div class="col-lg-4">
+            <!-- Quick Actions -->
+            <div class="glass-card mb-3">
+                <div class="card-header bg-transparent border-0 pt-4">
+                    <h6 class="mb-0 fw-bold">
+                        <i class="fas fa-bolt text-warning me-2"></i>Quick Actions
+                    </h6>
+                </div>
+                <div class="card-body">
+                    <div class="d-grid gap-2">
+                        <a href="mailto:{{ contact_message.email }}?subject=Re: {{ contact_message.subject }}" class="btn btn-primary">
+                            <i class="fas fa-reply me-2"></i>Reply via Email
+                        </a>
+                        <a href="{% url 'admin_contact_messages' %}" class="btn btn-outline-secondary">
+                            <i class="fas fa-arrow-left me-2"></i>Back to Inbox
+                        </a>
+                        <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteModal">
+                            <i class="fas fa-trash-alt me-2"></i>Delete Message
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Message Info -->
+            <div class="alert alert-info">
+                <h6 class="alert-heading">
+                    <i class="fas fa-info-circle me-2"></i>Message Info
+                </h6>
+                <ul class="small mb-0">
+                    <li>ID: #{{ contact_message.id }}</li>
+                    <li>Received: {{ contact_message.created_at|timesince }} ago</li>
+                    <li>Has attachment: {% if contact_message.attachment %}Yes{% else %}No{% endif %}</li>
+                </ul>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Message
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+                <h5>Delete this message?</h5>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form action="{% url 'admin_delete_contact_message' contact_message.id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

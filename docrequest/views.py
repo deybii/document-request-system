@@ -453,6 +453,15 @@ def admin_requests(request):
                 selected_requests.update(status='rejected')
                 messages.warning(request, f'⚠️ Successfully rejected {count} request(s).')
             
+            elif bulk_action == 'delete':
+            # Log deleted requests for the message
+                deleted_orders = list(selected_requests.values_list('order_id', flat=True))
+                selected_requests.delete()
+                messages.success(
+                    request, 
+                    f'✅ Successfully deleted {count} request(s).'
+                )
+                
             elif bulk_action == 'export_selected':
                 # Export selected requests to CSV
                 response = HttpResponse(content_type='text/csv')
@@ -956,3 +965,106 @@ def cancel_request(request, order_id):
     
     # If GET request, redirect to detail page
     return redirect('request_detail', order_id=order_id)
+
+@staff_member_required
+def admin_contact_messages(request):
+    """Admin view to manage contact form messages"""
+    from .models import ContactMessage
+    
+    messages_queryset = ContactMessage.objects.all().order_by('-created_at')
+    
+    # Search filter
+    search_query = request.GET.get('search', '')
+    if search_query:
+        messages_queryset = messages_queryset.filter(
+            Q(name__icontains=search_query) |
+            Q(email__icontains=search_query) |
+            Q(subject__icontains=search_query) |
+            Q(message__icontains=search_query)
+        )
+    
+    # Date filter
+    date_from = request.GET.get('date_from', '')
+    date_to = request.GET.get('date_to', '')
+    
+    if date_from:
+        try:
+            date_from_obj = datetime.strptime(date_from, '%Y-%m-%d').date()
+            messages_queryset = messages_queryset.filter(created_at__date__gte=date_from_obj)
+        except ValueError:
+            messages.warning(request, '⚠️ Invalid "from" date format.')
+    
+    if date_to:
+        try:
+            date_to_obj = datetime.strptime(date_to, '%Y-%m-%d').date()
+            messages_queryset = messages_queryset.filter(created_at__date__lte=date_to_obj)
+        except ValueError:
+            messages.warning(request, '⚠️ Invalid "to" date format.')
+    
+    # Pagination
+    paginator = Paginator(messages_queryset, 20)
+    page_number = request.GET.get('page')
+    page_obj = paginator.get_page(page_number)
+    
+    # Statistics
+    total_messages = ContactMessage.objects.count()
+    today_messages = ContactMessage.objects.filter(created_at__date=date.today()).count()
+    
+    context = {
+        'page_obj': page_obj,
+        'search_query': search_query,
+        'date_from': date_from,
+        'date_to': date_to,
+        'total_messages': total_messages,
+        'today_messages': today_messages,
+    }
+    return render(request, 'admin_contact_messages.html', context)
+
+
+@staff_member_required
+def admin_contact_message_detail(request, message_id):
+    """View individual contact message"""
+    from .models import ContactMessage
+    
+    contact_message = get_object_or_404(ContactMessage, id=message_id)
+    
+    context = {'contact_message': contact_message}
+    return render(request, 'admin_contact_message_detail.html', context)
+
+
+@staff_member_required
+def admin_delete_contact_message(request, message_id):
+    """Delete a contact message"""
+    from .models import ContactMessage
+    
+    contact_message = get_object_or_404(ContactMessage, id=message_id)
+    
+    if request.method == 'POST':
+        sender_name = contact_message.name
+        contact_message.delete()
+        messages.success(request, f'✅ Message from {sender_name} has been deleted.')
+    
+    return redirect('admin_contact_messages')
+
+@staff_member_required
+def admin_delete_request(request, order_id):
+    """Delete a document request"""
+    doc_request = get_object_or_404(DocumentRequest, order_id=order_id)
+    
+    if request.method == 'POST':
+        student_name = doc_request.user.get_full_name()
+        document_type = doc_request.get_document_type_display()
+        
+        try:
+            doc_request.delete()
+            messages.success(
+                request,
+                f'✅ Successfully deleted request {order_id} for {student_name} ({document_type})'
+            )
+        except Exception as e:
+            messages.error(request, f'❌ Error deleting request: {str(e)}')
+        
+        return redirect('admin_requests')
+    
+    # If GET, redirect to detail page
+    return redirect('admin_request_detail', order_id=order_id)

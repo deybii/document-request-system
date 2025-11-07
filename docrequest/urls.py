@@ -20,6 +20,10 @@ urlpatterns = [
     path('dashboard/users/', views.admin_users, name='admin_users'),
     path('dashboard/request/<str:order_id>/', views.admin_request_detail, name='admin_request_detail'),
     path('dashboard/user/verify/<int:profile_id>/', views.admin_verify_user, name='admin_verify_user'),
+    path('dashboard/request/delete/<str:order_id>/', views.admin_delete_request, name='admin_delete_request'),
+    path('dashboard/messages/', views.admin_contact_messages, name='admin_contact_messages'),
+    path('dashboard/message/<int:message_id>/', views.admin_contact_message_detail, name='admin_contact_message_detail'),
+    path('dashboard/message/delete/<int:message_id>/', views.admin_delete_contact_message, name='admin_delete_contact_message'),
     path('admin-edit-user/<int:profile_id>/', views.admin_edit_user, name='admin_edit_user'),
     path('admin-delete-user/<int:profile_id>/', views.admin_delete_user, name='admin_delete_user'),
 ]

@@ -536,6 +536,11 @@
                     <i class="fas fa-times-circle"></i>
                     Reject
                 </button>
+                
+                <button type="button" name="bulk_action" value="delete" class="bulk-action-btn btn btn-danger text-white" onclick="confirmBulkAction('delete', 'Are you sure you want to permanently DELETE the selected requests? This cannot be undone.')">
+                    <i class="fas fa-trash-alt"></i>
+                    Delete
+                </button>
             </form>
         </div>
     </div>
@@ -632,13 +637,23 @@
                                     <br>
                                     <i class="far fa-clock me-1"></i>{{ req.created_at|date:"h:i A" }}
                                 </small>
-                            </td>
-                            <td class="py-3 text-center">
-                                <a href="{% url 'admin_request_detail' req.order_id %}" 
-                                   class="btn btn-sm btn-outline-primary action-btn custom-tooltip" 
-                                   data-tooltip="View & manage request">
-                                    <i class="fas fa-eye me-1"></i>View
-                                </a>
+                            <td class="py-3 text-center" onclick="event.stopPropagation()">
+                                <div class="btn-group" role="group">
+                                    <!-- View Button -->
+                                    <a href="{% url 'admin_request_detail' req.order_id %}" 
+                                    class="btn btn-sm btn-outline-primary custom-tooltip" 
+                                    data-tooltip="View & manage request">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    
+                                    <!-- ✅ Delete Button -->
+                                    <button type="button" 
+                                            class="btn btn-sm btn-outline-danger custom-tooltip" 
+                                            data-tooltip="Delete request"
+                                            onclick="confirmDeleteRequest('{{ req.order_id }}', '{{ req.user.get_full_name }}', '{{ req.get_document_type_display }}')">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
                             </td>
                         </tr>
                         {% empty %}
@@ -798,6 +813,15 @@ function updateCheckboxes() {
     });
 }
 
+// Confirm delete request
+function confirmDeleteRequest(orderId, studentName, documentType) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteRequestModal'));
+    document.getElementById('deleteReqOrderId').textContent = orderId;
+    document.getElementById('deleteReqStudent').textContent = studentName;
+    document.getElementById('deleteReqDocument').textContent = documentType;
+    document.getElementById('deleteRequestForm').action = `/dashboard/request/delete/${orderId}/`;
+    modal.show();
+}
 // Clear selection
 function clearSelection() {
     const checkboxes = document.querySelectorAll('.request-checkbox');
@@ -890,4 +914,42 @@ document.querySelectorAll('a[href*="admin_request_detail"]').forEach(link => {
     });
 });
 </script>
+
+<!-- Delete Request Confirmation Modal -->
+<div class="modal fade" id="deleteRequestModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-file-times fa-4x text-danger mb-3"></i>
+                <h5 class="mb-3">Delete this request?</h5>
+                <div class="alert alert-warning">
+                    <strong>Order ID:</strong> <span id="deleteReqOrderId"></span><br>
+                    <strong>Student:</strong> <span id="deleteReqStudent"></span><br>
+                    <strong>Document:</strong> <span id="deleteReqDocument"></span>
+                </div>
+                <p class="text-danger small mb-0">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    This action cannot be undone.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form id="deleteRequestForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

@@ -417,6 +417,13 @@
                                 <i class="fas fa-times-circle me-2"></i>
                                 Reject Request
                             </button>
+
+                            <hr>
+                
+                            <button type="button" class="btn btn-outline-danger" data-bs-toggle="modal" data-bs-target="#deleteRequestModal">
+                                <i class="fas fa-trash-alt me-2"></i>Delete Request
+                            </button>
+
                         </div>
                     </form>
                 </div>
@@ -444,4 +451,42 @@ document.addEventListener('DOMContentLoaded', function() {
     });
 });
 </script>
+<!-- Delete Request Confirmation Modal -->
+<div class="modal fade" id="deleteRequestModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Request
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-file-times fa-4x text-danger mb-3"></i>
+                <h5 class="mb-3">Are you sure you want to delete this request?</h5>
+                <div class="alert alert-warning">
+                    <strong>Order ID:</strong> {{ doc_request.order_id }}<br>
+                    <strong>Student:</strong> {{ doc_request.user.get_full_name }}<br>
+                    <strong>Document:</strong> {{ doc_request.get_document_type_display }}<br>
+                    <strong>Status:</strong> {{ doc_request.get_status_display }}
+                </div>
+                <p class="text-danger small mb-0">
+                    <i class="fas fa-exclamation-circle me-1"></i>
+                    This action cannot be undone. All request data will be permanently deleted.
+                </p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form action="{% url 'admin_delete_request' doc_request.order_id %}" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Yes, Delete Request
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
 {% endblock %}

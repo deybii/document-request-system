@@ -1,0 +1,332 @@
+{% extends 'base.html' %}
+
+{% block title %}Contact Messages - Admin{% endblock %}
+
+{% block extra_css %}
+<style>
+:root {
+    --primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+    --success-gradient: linear-gradient(135deg, #56ab2f 0%, #a8e063 100%);
+    --warning-gradient: linear-gradient(135deg, #f2994a 0%, #f2c94c 100%);
+    --glass-bg: rgba(255, 255, 255, 0.9);
+    --glass-border: rgba(255, 255, 255, 0.18);
+    --shadow-md: 0 4px 16px rgba(0, 0, 0, 0.12);
+    --shadow-lg: 0 8px 24px rgba(0, 0, 0, 0.16);
+}
+
+.glass-card {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border: 1px solid var(--glass-border);
+    border-radius: 16px;
+    box-shadow: var(--shadow-md);
+    transition: all 0.3s ease;
+}
+
+.glass-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-card {
+    padding: 1.5rem;
+    border-radius: 16px;
+    text-align: center;
+    transition: all 0.3s ease;
+}
+
+.stat-card:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--shadow-lg);
+}
+
+.stat-icon {
+    width: 70px;
+    height: 70px;
+    margin: 0 auto 1rem;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 2rem;
+}
+
+.modern-table tbody tr {
+    transition: all 0.2s ease;
+    cursor: pointer;
+}
+
+.modern-table tbody tr:hover {
+    background: rgba(102, 126, 234, 0.08);
+    transform: scale(1.005);
+}
+
+.filter-panel {
+    background: var(--glass-bg);
+    backdrop-filter: blur(10px);
+    border-radius: 12px;
+    padding: 1.5rem;
+    margin-bottom: 2rem;
+    border: 1px solid var(--glass-border);
+}
+
+.message-preview {
+    max-width: 300px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="container-fluid mt-4 pb-5">
+    <!-- Header -->
+    <div class="d-flex justify-content-between align-items-center mb-4 flex-wrap">
+        <div class="mb-3 mb-md-0">
+            <h2 class="mb-2">
+                <i class="fas fa-envelope text-primary"></i>
+                <span class="ms-2">Contact Messages</span>
+            </h2>
+            <p class="text-muted mb-0">
+                <i class="fas fa-info-circle me-2"></i>
+                View and manage messages from users
+            </p>
+        </div>
+        <div class="btn-group" role="group">
+            <a href="{% url 'admin_dashboard' %}" class="btn btn-outline-secondary">
+                <i class="fas fa-arrow-left me-2"></i>Dashboard
+            </a>
+            <button class="btn btn-primary" onclick="exportMessages()">
+                <i class="fas fa-download me-2"></i>Export
+            </button>
+        </div>
+    </div>
+
+    <!-- Statistics -->
+    <div class="row mb-4">
+        <div class="col-md-6 mb-3">
+            <div class="stat-card glass-card">
+                <div class="stat-icon bg-primary bg-opacity-10 text-primary">
+                    <i class="fas fa-envelope"></i>
+                </div>
+                <h3 class="text-primary mb-1">{{ total_messages }}</h3>
+                <p class="text-muted mb-0">Total Messages</p>
+            </div>
+        </div>
+        
+        <div class="col-md-6 mb-3">
+            <div class="stat-card glass-card">
+                <div class="stat-icon bg-success bg-opacity-10 text-success">
+                    <i class="fas fa-calendar-day"></i>
+                </div>
+                <h3 class="text-success mb-1">{{ today_messages }}</h3>
+                <p class="text-muted mb-0">Today's Messages</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Filter Panel -->
+    <div class="filter-panel">
+        <form method="get" class="row g-3 align-items-end">
+            <div class="col-md-5">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-search me-1"></i>Search
+                </label>
+                <input type="text" name="search" class="form-control" placeholder="Search by name, email, or subject..." value="{{ search_query }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-calendar me-1"></i>From Date
+                </label>
+                <input type="date" name="date_from" class="form-control" value="{{ date_from }}">
+            </div>
+            <div class="col-md-3">
+                <label class="form-label fw-semibold text-muted small">
+                    <i class="fas fa-calendar me-1"></i>To Date
+                </label>
+                <input type="date" name="date_to" class="form-control" value="{{ date_to }}">
+            </div>
+            <div class="col-md-1">
+                <button class="btn btn-primary w-100">
+                    <i class="fas fa-filter"></i>
+                </button>
+            </div>
+        </form>
+    </div>
+
+    <!-- Messages Table -->
+    <div class="glass-card shadow-lg">
+        <div class="card-header bg-transparent border-0 pt-4 pb-3">
+            <h5 class="mb-0 fw-bold">
+                <i class="fas fa-inbox text-primary me-2"></i>Inbox
+            </h5>
+        </div>
+        <div class="card-body p-0">
+            <div class="table-responsive">
+                <table class="table modern-table mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            <th class="px-4 py-3">
+                                <i class="fas fa-user me-2"></i>Name
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-envelope me-2"></i>Email
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-tag me-2"></i>Subject
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-align-left me-2"></i>Message
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-paperclip me-2"></i>Attachment
+                            </th>
+                            <th class="py-3">
+                                <i class="fas fa-calendar me-2"></i>Date
+                            </th>
+                            <th class="py-3 text-center">
+                                <i class="fas fa-cog me-2"></i>Actions
+                            </th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        {% for msg in page_obj %}
+                        {% url 'admin_contact_message_detail' msg.id as msg_url %}
+                        <tr onclick="window.location.href='{{ msg_url }}'" style="cursor: pointer;">
+                            <td class="px-4 py-3">
+                                <div class="d-flex align-items-center">
+                                    <div class="rounded-circle bg-primary bg-opacity-10 text-primary d-flex align-items-center justify-content-center me-2" style="width: 40px; height: 40px;">
+                                        <i class="fas fa-user"></i>
+                                    </div>
+                                    <strong>{{ msg.name }}</strong>
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                <a href="mailto:{{ msg.email }}" class="text-decoration-none" onclick="event.stopPropagation()">
+                                    <i class="fas fa-envelope me-1 text-muted"></i>{{ msg.email }}
+                                </a>
+                            </td>
+                            <td class="py-3">
+                                <strong>{{ msg.subject }}</strong>
+                            </td>
+                            <td class="py-3">
+                                <div class="message-preview" title="{{ msg.message }}">
+                                    {{ msg.message|truncatewords:10 }}
+                                </div>
+                            </td>
+                            <td class="py-3">
+                                {% if msg.attachment %}
+                                    <span class="badge bg-info">
+                                        <i class="fas fa-paperclip me-1"></i>Yes
+                                    </span>
+                                {% else %}
+                                    <span class="badge bg-secondary">
+                                        <i class="fas fa-minus me-1"></i>None
+                                    </span>
+                                {% endif %}
+                            </td>
+                            <td class="py-3">
+                                <small class="text-muted">
+                                    <i class="far fa-clock me-1"></i>{{ msg.created_at|date:"M d, Y" }}<br>
+                                    {{ msg.created_at|date:"h:i A" }}
+                                </small>
+                            </td>
+                            <td class="py-3 text-center" onclick="event.stopPropagation()">
+                                <div class="btn-group" role="group">
+                                    <a href="{% url 'admin_contact_message_detail' msg.id %}" class="btn btn-sm btn-outline-primary" title="View">
+                                        <i class="fas fa-eye"></i>
+                                    </a>
+                                    <button type="button" class="btn btn-sm btn-outline-danger" onclick="confirmDelete('{{ msg.id }}', '{{ msg.name }}')" title="Delete">
+                                        <i class="fas fa-trash-alt"></i>
+                                    </button>
+                                </div>
+                            </td>
+                        </tr>
+                        {% empty %}
+                        <tr>
+                            <td colspan="7" class="text-center text-muted py-5">
+                                <i class="fas fa-inbox fa-4x mb-3 d-block"></i>
+                                <p class="mb-0">No messages found</p>
+                            </td>
+                        </tr>
+                        {% endfor %}
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    {% if page_obj.paginator.num_pages > 1 %}
+    <div class="d-flex justify-content-center mt-4">
+        <nav>
+            <ul class="pagination pagination-lg">
+                {% if page_obj.has_previous %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.previous_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                        <i class="fas fa-chevron-left"></i>
+                    </a>
+                </li>
+                {% endif %}
+                
+                <li class="page-item active">
+                    <span class="page-link">Page {{ page_obj.number }} of {{ page_obj.paginator.num_pages }}</span>
+                </li>
+                
+                {% if page_obj.has_next %}
+                <li class="page-item">
+                    <a class="page-link" href="?page={{ page_obj.next_page_number }}{% if search_query %}&search={{ search_query }}{% endif %}{% if date_from %}&date_from={{ date_from }}{% endif %}{% if date_to %}&date_to={{ date_to }}{% endif %}">
+                        <i class="fas fa-chevron-right"></i>
+                    </a>
+                </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+    {% endif %}
+</div>
+
+<!-- Delete Modal -->
+<div class="modal fade" id="deleteModal" tabindex="-1">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content" style="border-radius: 16px;">
+            <div class="modal-header bg-danger text-white">
+                <h5 class="modal-title">
+                    <i class="fas fa-exclamation-triangle me-2"></i>Delete Message
+                </h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
+            </div>
+            <div class="modal-body text-center p-4">
+                <i class="fas fa-trash-alt fa-4x text-danger mb-3"></i>
+                <h5>Delete message from <span id="deleteMsgSender"></span>?</h5>
+                <p class="text-muted small">This action cannot be undone.</p>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">
+                    <i class="fas fa-times me-2"></i>Cancel
+                </button>
+                <form id="deleteForm" method="post" style="display: inline;">
+                    {% csrf_token %}
+                    <button type="submit" class="btn btn-danger">
+                        <i class="fas fa-trash-alt me-2"></i>Delete
+                    </button>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+function confirmDelete(msgId, senderName) {
+    const modal = new bootstrap.Modal(document.getElementById('deleteModal'));
+    document.getElementById('deleteMsgSender').textContent = senderName;
+    document.getElementById('deleteForm').action = `/dashboard/message/delete/${msgId}/`;
+    modal.show();
+}
+
+function exportMessages() {
+    alert('Export Messages:\n• CSV Export\n• PDF Report\n• Email Export\n\nWould be implemented here.');
+}
+</script>
+{% endblock %}
