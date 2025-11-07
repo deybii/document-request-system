@@ -168,6 +168,48 @@
 </head>
 <body>
     <div class="container">
+    <!-- ✅ Messages Display Section -->
+    {% if messages %}
+    <div class="row mt-4">
+        <div class="col-md-8 mx-auto">
+            {% for message in messages %}
+            <div class="alert alert-dismissible fade show shadow-lg" 
+                role="alert" 
+                style="animation: slideInDown 0.5s ease; 
+                        border-radius: 15px; 
+                        background: white; 
+                        color: #212529;
+                        border-left: 5px solid {% if 'success' in message.tags %}#28a745{% elif 'error' in message.tags %}#dc3545{% elif 'warning' in message.tags %}#ffc107{% else %}#17a2b8{% endif %};">
+                <div class="d-flex align-items-start">
+                    <div class="me-3">
+                        {% if 'success' in message.tags %}
+                            <i class="fas fa-check-circle fa-2x text-success"></i>
+                        {% elif 'error' in message.tags %}
+                            <i class="fas fa-exclamation-circle fa-2x text-danger"></i>
+                        {% elif 'warning' in message.tags %}
+                            <i class="fas fa-exclamation-triangle fa-2x text-warning"></i>
+                        {% else %}
+                            <i class="fas fa-info-circle fa-2x text-info"></i>
+                        {% endif %}
+                    </div>
+                    <div class="flex-grow-1">
+                        {% if 'safe' in message.tags %}
+                            {{ message|safe }}
+                        {% else %}
+                            {{ message }}
+                        {% endif %}
+                    </div>
+                    <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    {% endif %}
+    
+    <!-- Hero Section -->
+    <div class="hero-section position-relative">
+        <!-- ... rest of hero section ... -->
         <!-- Hero Section -->
         <div class="hero-section position-relative">
             <h1><i class="fas fa-file-alt"></i> Document Request System</h1>
@@ -594,6 +636,36 @@
         registerModal.show();
     }
 
+    // ✅ Auto-open login modal after successful registration
+    document.addEventListener('DOMContentLoaded', function() {
+        const successAlert = document.querySelector('.alert-success');
+        
+        if (successAlert && successAlert.textContent.includes('Registration Successful')) {
+            // Close register modal if open
+            const registerModal = bootstrap.Modal.getInstance(document.getElementById('registerModal'));
+            if (registerModal) {
+                registerModal.hide();
+            }
+            
+            // Open login modal after a short delay
+            setTimeout(() => {
+                const loginModal = new bootstrap.Modal(document.getElementById('loginModal'));
+                loginModal.show();
+                
+                // Focus on school ID input
+                setTimeout(() => {
+                    const schoolIdInput = document.querySelector('#loginModal input[name="username"]');
+                    if (schoolIdInput) {
+                        schoolIdInput.focus();
+                    }
+                }, 500);
+            }, 500);
+            
+            // Scroll to top to see the message
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+    });
+
     // Smooth scroll for scroll indicator
     document.querySelector('.scroll-indicator')?.addEventListener('click', function() {
         window.scrollTo({
@@ -602,5 +674,18 @@
         });
     });
 </script>
+
+<style>
+@keyframes slideInDown {
+    from {
+        opacity: 0;
+        transform: translateY(-30px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+</style>
 </body>
 </html>

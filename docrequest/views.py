@@ -49,18 +49,31 @@ def index(request):
                     messages.error(request, '❌ Invalid School ID or password.')
             else:
                 messages.error(request, '❌ Invalid School ID or password. Please check your credentials.')
-        
+
         elif 'register_submit' in request.POST:
             register_form = RegisterForm(request.POST)
             if register_form.is_valid():
                 user = register_form.save()
-                login(request, user)
+                profile = user.profile
+                
                 messages.success(
                     request,
-                    f'✅ Registration successful! Welcome, {user.get_full_name()}! '
-                    f'Your account email is: {user.email}'
+                    f'<div class="text-center">'
+                    f'<i class="fas fa-check-circle fa-3x text-success mb-3"></i><br>'
+                    f'<h4 class="mb-3">Registration Successful!</h4>'
+                    f'<p class="mb-3">Welcome, <strong>{user.get_full_name()}</strong>!</p>'
+                    f'<div class="alert alert-light border">'
+                    f'<i class="fas fa-id-badge me-2"></i><strong>School ID:</strong> {profile.school_id}<br>'
+                    f'<i class="fas fa-envelope me-2"></i><strong>Email:</strong> {user.email}<br>'
+                    f'<i class="fas fa-user-tag me-2"></i><strong>Role:</strong> {profile.get_role_display()}'
+                    f'</div>'
+                    f'<p class="mb-2"><i class="fas fa-sign-in-alt me-2"></i>Please use your <strong>School ID</strong> and password to log in.</p>'
+                    f'<small class="text-muted">Your account is ready to use!</small>'
+                    f'</div>',
+                    extra_tags='safe login-ready'  # ✅ Special tag for JavaScript
                 )
-                return redirect('home')
+                
+                return redirect('index')
             else:
                 for field, errors in register_form.errors.items():
                     for error in errors:
